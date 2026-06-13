@@ -6,6 +6,10 @@ A fun, web-based math quiz game for Grade 5 students. Answer questions to earn c
 
 ## Screenshots
 
+### Home — pick a topic to practice
+
+![Math Garden home screen](docs/frontpage.png)
+
 ### The Shop — buy backgrounds, pets, plants & power-ups with coins
 
 ![Garden Shop — Backgrounds tab](docs/shop-backgrounds.png)
