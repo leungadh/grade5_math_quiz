@@ -4,6 +4,20 @@ A fun, web-based math quiz game for Grade 5 students. Answer questions to earn c
 
 ---
 
+## Screenshots
+
+### The Shop — buy backgrounds, pets, plants & power-ups with coins
+
+![Garden Shop — Backgrounds tab](docs/shop-backgrounds.png)
+
+![Garden Shop — Pets tab](docs/shop-pets.png)
+
+### The animated garden — pets wander among your plants
+
+![Andy's animated garden](docs/garden.png)
+
+---
+
 ## Quick start
 
 1. Open a terminal in this folder.
