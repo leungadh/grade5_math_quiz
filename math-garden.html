@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Garden 🌱 — Grade 5</title>
+<style>
+  :root{
+    --bg1:#aee6f9; --bg2:#d8f5c8; --soil:#7a4f2b; --soil2:#9c6638;
+    --card:#ffffff; --ink:#2b3a2b; --accent:#3fa34d; --accent2:#2e7d34;
+    --gold:#ffc83d; --wrong:#ff6b6b; --right:#4caf50; --sky:#bdeefc;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    font-family:"Comic Sans MS","Segoe UI",system-ui,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,var(--bg1) 0%,#cfeffb 45%,var(--bg2) 100%);
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    overflow-x:hidden;
+  }
+  .clouds{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+  .cloud{position:absolute;font-size:48px;opacity:.85;animation:drift 40s linear infinite;}
+  @keyframes drift{from{transform:translateX(-120px);}to{transform:translateX(110vw);}}
+
+  .wrap{position:relative;z-index:1;width:100%;max-width:760px;padding:16px;}
+
+  /* Top bar */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:rgba(255,255,255,.75);border-radius:18px;padding:10px 16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.08);backdrop-filter:blur(4px);margin-bottom:14px;
+  }
+  .title{font-size:22px;font-weight:bold;color:var(--accent2);}
+  .stats{display:flex;gap:14px;font-size:18px;font-weight:bold;}
+  .stat{display:flex;align-items:center;gap:5px;}
+  .coins{color:#c9921a;}
+  .streak{color:#e8602c;}
+
+  .panel{
+    background:var(--card);border-radius:22px;padding:22px;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+  }
+  h1{margin:0 0 6px;font-size:30px;color:var(--accent2);text-align:center;}
+  .sub{text-align:center;color:#5a6b5a;margin-bottom:18px;font-size:16px;}
+
+  button{font-family:inherit;cursor:pointer;border:none;}
+  .btn{
+    background:var(--accent);color:#fff;font-size:18px;font-weight:bold;
+    padding:14px 22px;border-radius:16px;box-shadow:0 4px 0 var(--accent2);
+    transition:transform .06s, box-shadow .06s;width:100%;margin-top:8px;
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--accent2);}
+  .btn.secondary{background:#7e8fa6;box-shadow:0 4px 0 #5d6b80;}
+
+  .topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
+  .topic{
+    background:#f3fbef;border:3px solid #d6ecc8;border-radius:18px;padding:16px;
+    text-align:center;transition:transform .08s, border-color .08s;font-size:16px;font-weight:bold;
+  }
+  .topic:hover{transform:translateY(-3px);border-color:var(--accent);}
+  .topic .emoji{font-size:38px;display:block;margin-bottom:6px;}
+  .topic small{display:block;font-weight:normal;color:#6b7d6b;margin-top:4px;font-size:12px;}
+
+  /* Question card */
+  .qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;color:#6b7d6b;}
+  .progress{height:12px;background:#e6efe1;border-radius:8px;overflow:hidden;margin-bottom:16px;}
+  .progress > div{height:100%;background:linear-gradient(90deg,#7ed957,#3fa34d);width:0;transition:width .4s;}
+  .question{font-size:24px;font-weight:bold;margin:6px 0 18px;line-height:1.4;text-align:center;}
+  .choices{display:grid;gap:12px;}
+  .choice{
+    background:#f7fbff;border:3px solid #d4e6f5;border-radius:16px;padding:16px;
+    font-size:20px;text-align:left;transition:transform .06s, background .15s, border-color .15s;
+    color:var(--ink);
+  }
+  .choice:hover:not(:disabled){transform:translateY(-2px);border-color:#7fb6e8;}
+  .choice.correct{background:#dff5e1;border-color:var(--right);}
+  .choice.wrong{background:#ffe2e2;border-color:var(--wrong);}
+  .choice:disabled{cursor:default;}
+
+  .feedback{margin-top:16px;padding:16px;border-radius:16px;font-size:17px;line-height:1.5;display:none;}
+  .feedback.show{display:block;animation:pop .3s;}
+  .feedback.good{background:#e4f7e6;border:2px solid var(--right);}
+  .feedback.bad{background:#fdeaea;border:2px solid var(--wrong);}
+  .feedback b{display:block;margin-bottom:6px;font-size:18px;}
+  @keyframes pop{from{transform:scale(.95);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  /* Garden */
+  .garden{
+    margin-top:16px;border-radius:18px;overflow:hidden;
+    background:linear-gradient(180deg,var(--sky) 0%,var(--sky) 55%,#cfe8b8 55%,#bfe0a3 70%,var(--soil2) 70%,var(--soil) 100%);
+    position:relative;height:170px;border:3px solid #cdb38f;
+  }
+  .plots{position:absolute;bottom:8px;left:0;width:100%;display:flex;justify-content:space-around;align-items:flex-end;padding:0 12px;}
+  .plot{font-size:40px;text-align:center;transition:transform .3s;filter:drop-shadow(0 2px 1px rgba(0,0,0,.15));}
+  .plot.grow{animation:sprout .6s;}
+  @keyframes sprout{0%{transform:scale(0) translateY(20px);}60%{transform:scale(1.25);}100%{transform:scale(1);}}
+  .pets{position:absolute;top:8px;right:10px;display:flex;gap:4px;font-size:26px;}
+  .garden-label{position:absolute;top:6px;left:12px;font-size:13px;color:#3a5a8a;font-weight:bold;background:rgba(255,255,255,.6);padding:2px 8px;border-radius:10px;}
+
+  .center{text-align:center;}
+  .big-emoji{font-size:72px;margin:10px 0;}
+  .hidden{display:none !important;}
+  .reward-pop{position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:60px;z-index:50;pointer-events:none;animation:rise 1.1s forwards;}
+  @keyframes rise{0%{opacity:0;transform:translate(-50%,10px) scale(.5);}25%{opacity:1;transform:translate(-50%,-10px) scale(1.2);}100%{opacity:0;transform:translate(-50%,-90px) scale(1);}}
+  .row{display:flex;gap:10px;}
+  .row .btn{margin-top:14px;}
+  .footnote{text-align:center;font-size:12px;color:#7a8a7a;margin-top:14px;}
+  .toggle{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px;color:#6b7d6b;margin-top:10px;}
+
+  /* Shop */
+  .shop-btn{background:var(--gold);color:#5a4200;font-weight:bold;font-size:16px;padding:8px 14px;border-radius:14px;box-shadow:0 3px 0 #d9a400;}
+  .shop-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #d9a400;}
+  .modal{position:fixed;inset:0;background:rgba(20,40,20,.55);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal.hidden{display:none;}
+  .shop{background:#fff;border-radius:22px;max-width:680px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.3);overflow:hidden;}
+  .shop-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(90deg,#ffe7a3,#ffd45e);}
+  .shop-head h2{margin:0;color:#7a5a00;font-size:22px;}
+  .shop-head .bal{font-weight:bold;color:#8a6500;font-size:18px;}
+  .closeX{background:#fff;border-radius:50%;width:34px;height:34px;font-size:18px;font-weight:bold;color:#7a5a00;box-shadow:0 2px 4px rgba(0,0,0,.15);}
+  .tabs{display:flex;gap:6px;padding:10px 16px 0;flex-wrap:wrap;}
+  .tab{background:#f0f0f0;border-radius:12px 12px 0 0;padding:8px 14px;font-size:14px;font-weight:bold;color:#777;}
+  .tab.active{background:#fff;color:var(--accent2);box-shadow:0 -2px 0 var(--accent) inset;}
+  .shop-body{padding:14px 18px 20px;overflow-y:auto;}
+  .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
+  .item{background:#f8fbf6;border:3px solid #e2eed8;border-radius:16px;padding:12px 8px;text-align:center;}
+  .item .ic{font-size:40px;display:block;margin-bottom:4px;}
+  .item .nm{font-size:13px;font-weight:bold;color:#3a4a3a;min-height:32px;display:flex;align-items:center;justify-content:center;}
+  .item .buy{margin-top:8px;width:100%;background:var(--accent);color:#fff;font-weight:bold;font-size:14px;padding:8px;border-radius:10px;box-shadow:0 3px 0 var(--accent2);}
+  .item .buy:active{transform:translateY(2px);box-shadow:0 1px 0 var(--accent2);}
+  .item .buy:disabled{background:#cfd8cf;box-shadow:0 3px 0 #b3bdb3;cursor:default;color:#fff;}
+  .item.owned{border-color:var(--accent);}
+  .item .owned-tag{font-size:12px;color:var(--accent2);font-weight:bold;}
+  .item .equip{margin-top:6px;width:100%;background:#7e8fa6;color:#fff;font-size:13px;padding:6px;border-radius:9px;box-shadow:0 3px 0 #5d6b80;font-weight:bold;}
+  .item .equip.on{background:var(--accent2);box-shadow:0 3px 0 #1c5a22;}
+  .price{font-size:13px;color:#c9921a;font-weight:bold;}
+  .qty{font-size:12px;color:#666;}
+
+  /* Power-up toolbar during quiz */
+  .powerbar{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;}
+  .pu{background:#fff4d6;border:2px solid #ffd45e;border-radius:12px;padding:6px 10px;font-size:14px;font-weight:bold;color:#8a6500;cursor:pointer;}
+  .pu:disabled{opacity:.4;cursor:default;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2e7d34;color:#fff;padding:10px 18px;border-radius:14px;font-weight:bold;z-index:90;box-shadow:0 4px 14px rgba(0,0,0,.25);animation:pop .3s;}
+  .decor{position:absolute;bottom:8px;font-size:30px;}
+
+  /* Big animated garden page */
+  .biggarden{position:relative;height:400px;border-radius:18px;overflow:hidden;border:3px solid #cdb38f;margin-top:6px;}
+  .sprite{position:absolute;font-size:34px;user-select:none;cursor:pointer;will-change:left,top,transform;line-height:1;z-index:3;}
+  .gplant{position:absolute;bottom:4px;transform-origin:bottom center;animation:sway 3s ease-in-out infinite;z-index:2;}
+  @keyframes sway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
+  .sun{position:absolute;top:14px;right:18px;font-size:44px;z-index:1;animation:spin 40s linear infinite;}
+  @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+  .growthbar{height:16px;background:#e6efe1;border-radius:9px;overflow:hidden;margin:10px 0 2px;}
+  .growthbar>div{height:100%;background:linear-gradient(90deg,#7ed957,#3fa34d);width:0;transition:width .6s;}
+  /* ambient effects */
+  .star{position:absolute;color:#fff;z-index:1;animation:twinkle 2.2s ease-in-out infinite;pointer-events:none;}
+  @keyframes twinkle{0%,100%{opacity:.2;}50%{opacity:.95;}}
+  .firefly{position:absolute;width:7px;height:7px;border-radius:50%;background:#fff7a8;box-shadow:0 0 10px 4px rgba(255,240,140,.85);z-index:3;animation:glow 1.6s ease-in-out infinite;pointer-events:none;}
+  @keyframes glow{0%,100%{opacity:.35;}50%{opacity:1;}}
+  .spark{position:absolute;pointer-events:none;z-index:3;font-size:15px;}
+  .nightdim{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(circle at 72% 22%, rgba(255,255,210,.05), rgba(8,12,40,.38));}
+
+  /* Results celebration */
+  .result-stars{font-size:42px;letter-spacing:4px;margin:2px 0 4px;line-height:1;}
+  .result-stars .on{color:var(--gold);text-shadow:0 2px 3px rgba(0,0,0,.15);animation:starpop .4s backwards;}
+  .result-stars .off{color:#d8e0d8;}
+  @keyframes starpop{0%{transform:scale(0) rotate(-30deg);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+  .result-score{font-size:30px;font-weight:bold;color:var(--accent2);margin-bottom:6px;}
+  .confetti{position:fixed;top:-14px;width:10px;height:14px;z-index:100;pointer-events:none;border-radius:2px;will-change:transform;animation:confettiFall linear forwards;}
+  @keyframes confettiFall{to{transform:translateY(108vh) rotate(900deg);}}
+</style>
+</head>
+<body>
+<div class="clouds">
+  <div class="cloud" style="top:8%;animation-delay:0s;">☁️</div>
+  <div class="cloud" style="top:22%;animation-delay:14s;font-size:64px;">☁️</div>
+  <div class="cloud" style="top:5%;animation-delay:28s;font-size:36px;">☁️</div>
+</div>
+
+<div class="wrap">
+  <div class="topbar" id="topbar">
+    <div class="title">🌱 Math Garden</div>
+    <div class="stats">
+      <div class="stat coins">🪙 <span id="coinCount">0</span></div>
+      <div class="stat streak">🔥 <span id="streakCount">0</span></div>
+      <button id="shopBtn" class="shop-btn">🛒 Shop</button>
+    </div>
+  </div>
+
+  <!-- ============ LOGIN / PLAYER PICKER ============ -->
+  <div id="loginScreen" class="panel">
+    <h1>Who's playing? 👋</h1>
+    <p class="sub">Pick your player to load your own garden and coins. Each player has separate progress.</p>
+    <div class="center"><div class="big-emoji">🌱👤🪴</div></div>
+    <div class="topic-grid" id="userGrid"></div>
+    <button class="btn secondary" id="addUserBtn">➕ New Player</button>
+  </div>
+
+  <!-- ============ START SCREEN ============ -->
+  <div id="startScreen" class="panel hidden">
+    <h1 id="welcomeTitle">Welcome to Math Garden!</h1>
+    <p class="sub">Answer math questions to earn coins 🪙, grow your garden 🌷, and collect cute pets 🐰. Let's go!</p>
+    <div id="welcomeBack" class="center" style="display:none;background:#f3fbef;border:2px solid #d6ecc8;border-radius:16px;padding:10px;margin-bottom:14px;font-size:15px;color:#3a5a3a;"></div>
+    <div class="center"><div class="big-emoji">🪴🐣🌻</div></div>
+    <p class="sub" style="margin-bottom:4px;"><b>Pick what you want to practice:</b></p>
+    <div class="topic-grid" id="topicGrid"></div>
+    <button class="btn" id="mixedBtn">🎲 Surprise Me! (All Topics)</button>
+    <button class="btn secondary" id="visitGardenBtn">🌳 Visit My Garden</button>
+    <button class="btn secondary" id="switchUserBtn">👤 Switch Player</button>
+    <div class="footnote">Grade 5 • Modules 4 &amp; 5: Fractions, Decimals, Volume, Area &amp; 2D Shapes</div>
+  </div>
+
+  <!-- ============ QUIZ SCREEN ============ -->
+  <div id="quizScreen" class="panel hidden">
+    <div class="qmeta">
+      <span id="topicLabel">Topic</span>
+      <span id="qCounter">Question 1 of 8</span>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <div class="powerbar" id="powerbar"></div>
+    <div class="question" id="questionText"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn hidden" id="nextBtn">Next ➡️</button>
+
+    <div class="garden">
+      <span class="garden-label">Your Garden 🌿</span>
+      <div class="pets" id="pets"></div>
+      <div class="plots" id="plots"></div>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS SCREEN ============ -->
+  <div id="resultScreen" class="panel hidden center">
+    <h1 id="resultTitle">Great job! 🎉</h1>
+    <div class="big-emoji" id="resultEmoji">🏆</div>
+    <div id="resultStars" class="result-stars"></div>
+    <div id="resultScore" class="result-score"></div>
+    <p class="sub" id="resultText"></p>
+    <div class="garden" style="margin-bottom:6px;">
+      <span class="garden-label">Your Garden 🌿</span>
+      <div class="pets" id="petsResult"></div>
+      <div class="plots" id="plotsResult"></div>
+    </div>
+    <button class="btn" id="resultGardenBtn">🌳 See My Garden</button>
+    <div class="row">
+      <button class="btn" id="playAgainBtn">🔁 Play Again</button>
+      <button class="btn secondary" id="homeBtn">🏠 Home</button>
+    </div>
+  </div>
+
+  <!-- ============ GARDEN SCREEN (animated) ============ -->
+  <div id="gardenScreen" class="panel hidden">
+    <h1 id="gardenTitle">My Garden 🌳</h1>
+    <div id="growthLabel" class="sub" style="margin-bottom:4px;"></div>
+    <div class="growthbar"><div id="growthFill"></div></div>
+    <div id="bigGarden" class="biggarden"></div>
+    <div id="gardenEmpty" class="center" style="display:none;color:#6b7d6b;margin-top:12px;font-size:15px;">
+      Your garden is empty! Earn coins by answering questions, then visit the 🛒 Shop to buy plants and animals.
+    </div>
+    <p class="footnote">Tip: tap an animal to make it hop! 🐾</p>
+    <div class="row">
+      <button class="btn" id="gardenShopBtn">🛒 Shop</button>
+      <button class="btn secondary" id="gardenHomeBtn">🏠 Home</button>
+    </div>
+  </div>
+
+  <div class="footnote">Made for Grade 5 • Eureka Modules 4 &amp; 5 &nbsp;|&nbsp; <span id="kimiStatus">Question source: Built-in bank</span></div>
+</div>
+
+<!-- ============ SHOP MODAL ============ -->
+<div id="shopModal" class="modal hidden">
+  <div class="shop">
+    <div class="shop-head">
+      <h2>🛒 Garden Shop</h2>
+      <span class="bal">🪙 <span id="shopBalance">0</span></span>
+      <button class="closeX" id="shopClose">✕</button>
+    </div>
+    <div class="tabs" id="shopTabs"></div>
+    <div class="shop-body"><div class="shop-grid" id="shopGrid"></div></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MATH GARDEN — Grade 5 Module 5 quiz game
+   Single-file, no dependencies. Open in any browser.
+   ============================================================ */
+
+/* ---------- CONFIG ---------- */
+let STUDENT = "Sophie";   // the current player's name (set when a player logs in)
+const CONFIG = {
+  questionsPerRound: 5,
+  // KIMI is ON. Questions are generated by KIMI (with a safe fallback to the
+  // built-in bank if the AI is unavailable). Run the game through kimi-proxy.py
+  // so the key stays on your machine — see kimi-proxy.py for instructions.
+  USE_KIMI: true,
+  kimi: {
+    endpoint: "/api/kimi",   // local proxy (kimi-proxy.py) — NOT the raw Moonshot URL
+    model: "moonshot-v1-8k"
+    // No apiKey here on purpose: the proxy adds it server-side so it never reaches the browser.
+  }
+};
+
+/* ---------- QUESTION BANK (grounded in Module 5 Topics A–D) ---------- */
+/* Each question: {topic, q, choices:[...], answer:index, explain} */
+const BANK = {
+  volume: { name:"Volume Concepts", emoji:"🧊", items:[
+    { q:"A rectangular prism is built from unit cubes. It has 3 layers, and each layer has 8 cubes. What is its volume?",
+      choices:["11 cubic units","24 cubic units","16 cubic units","32 cubic units"], answer:1,
+      explain:"Each layer has 8 cubes and there are 3 layers, so 3 × 8 = 24 cubic units. You can find volume by multiplying the cubes in one layer by the number of layers!" },
+    { q:"Volume tells us how much space a solid figure takes up. Which units do we use to measure volume?",
+      choices:["square units","cubic units","line units","flat units"], answer:1,
+      explain:"Volume is measured in CUBIC units (like cubic cm) because we are filling a 3-D space with little cubes. Area uses square units, but volume uses cubes." },
+    { q:"A box is 2 cubes long, 3 cubes wide, and 2 cubes tall. How many unit cubes fill it completely?",
+      choices:["7 cubes","10 cubes","12 cubes","14 cubes"], answer:2,
+      explain:"Count by layers: the bottom layer is 2 × 3 = 6 cubes, and there are 2 layers, so 6 × 2 = 12 cubes." },
+    { q:"The bottom layer of a prism has 6 unit cubes. The prism is 4 layers tall. What is the volume?",
+      choices:["10 cubic units","18 cubic units","24 cubic units","46 cubic units"], answer:2,
+      explain:"One layer = 6 cubes, and there are 4 layers: 6 × 4 = 24 cubic units." },
+    { q:"How many faces does a right rectangular prism (like a cereal box) have?",
+      choices:["4 faces","6 faces","8 faces","12 faces"], answer:1,
+      explain:"A rectangular prism has 6 flat faces — top, bottom, and 4 sides. (It also has 12 edges and 8 corners.)" },
+    { q:"Why is the number of cubes in one layer the same as the number of squares on the bottom face?",
+      choices:["Because each cube sits on one square","Because cubes are round","Because layers are empty","It is not the same"], answer:0,
+      explain:"Each unit cube rests on exactly one unit square of the base, so one layer of cubes matches the squares on the bottom face. That's the link between area and volume!" },
+    { q:"A box is packed with 2 layers of cubes. Each layer is 4 cubes long and 3 cubes wide. What is the volume?",
+      choices:["24 cubic units","9 cubic units","14 cubic units","18 cubic units"], answer:0,
+      explain:"One layer is 4 × 3 = 12 cubes, and there are 2 layers: 12 × 2 = 24 cubic units." },
+    { q:"5 unit cubes are stacked straight up into a tower. What is the tower's volume?",
+      choices:["5 cubic units","10 cubic units","15 cubic units","1 cubic unit"], answer:0,
+      explain:"Each cube is 1 cubic unit, and there are 5 of them: 5 cubic units." },
+    { q:"A prism is 3 cubes long, 3 cubes wide, and 1 cube tall. How many unit cubes fill it?",
+      choices:["9 cubes","6 cubes","12 cubes","27 cubes"], answer:0,
+      explain:"The single layer is 3 × 3 = 9 cubes, and it is only 1 layer tall, so 9 cubes." },
+    { q:"Each layer of a prism has 10 cubes, and the prism has 3 layers. What is the volume?",
+      choices:["30 cubic units","13 cubic units","20 cubic units","300 cubic units"], answer:0,
+      explain:"10 cubes per layer × 3 layers = 30 cubic units." },
+    { q:"A prism is completely packed with 4 layers of 5 cubes each. What is its volume?",
+      choices:["20 cubic units","9 cubic units","25 cubic units","40 cubic units"], answer:0,
+      explain:"5 cubes per layer × 4 layers = 20 cubic units." },
+    { q:"How many unit cubes are in a prism that measures 2 cubes by 2 cubes by 5 cubes?",
+      choices:["20 cubes","9 cubes","14 cubes","40 cubes"], answer:0,
+      explain:"2 × 2 = 4 cubes in a layer, and 5 layers tall: 4 × 5 = 20 cubes." },
+  ]},
+
+  formula: { name:"Volume Formulas", emoji:"📦", items:[
+    { q:"Find the volume of a prism that is 5 cm long, 3 cm wide, and 2 cm tall. (V = length × width × height)",
+      choices:["10 cm³","30 cm³","25 cm³","16 cm³"], answer:1,
+      explain:"V = l × w × h = 5 × 3 × 2 = 30 cm³. Multiply all three edge lengths together." },
+    { q:"A prism has a base area of 12 cm² and a height of 4 cm. What is its volume? (V = base area × height)",
+      choices:["16 cm³","48 cm³","36 cm³","3 cm³"], answer:1,
+      explain:"V = base area × height = 12 × 4 = 48 cm³. You can find volume by multiplying the area of the base by how tall it is." },
+    { q:"How much liquid fits in a container with a volume of 60 cubic centimeters? (1 cm³ = 1 mL)",
+      choices:["6 mL","60 mL","600 mL","16 mL"], answer:1,
+      explain:"1 cubic centimeter holds exactly 1 milliliter, so 60 cm³ = 60 mL." },
+    { q:"A fish tank is 10 cm long, 5 cm wide, and 4 cm tall. What is its volume?",
+      choices:["19 cm³","200 cm³","90 cm³","150 cm³"], answer:1,
+      explain:"V = 10 × 5 × 4 = 200 cm³. Multiply the three edge lengths." },
+    { q:"A solid is made of two prisms that don't overlap. One has a volume of 8 cm³, the other 6 cm³. What is the total volume?",
+      choices:["2 cm³","14 cm³","48 cm³","68 cm³"], answer:1,
+      explain:"Volume is additive: just add the parts. 8 + 6 = 14 cm³." },
+    { q:"A prism has a volume of 24 cm³ and a base area of 6 cm². What is its height?",
+      choices:["4 cm","18 cm","30 cm","144 cm"], answer:0,
+      explain:"Since V = base area × height, we work backward: height = 24 ÷ 6 = 4 cm." },
+    { q:"A cube has edges that are each 3 cm long. What is its volume?",
+      choices:["9 cm³","27 cm³","18 cm³","12 cm³"], answer:1,
+      explain:"All edges of a cube are equal: V = 3 × 3 × 3 = 27 cm³." },
+    { q:"A storage box is 6 cm long, 2 cm wide, and 5 cm tall. How many 1 cm³ cubes can fit inside?",
+      choices:["13 cubes","60 cubes","40 cubes","30 cubes"], answer:1,
+      explain:"The number of 1 cm³ cubes equals the volume: 6 × 2 × 5 = 60 cm³, so 60 cubes." },
+    { q:"A prism is 7 cm long, 2 cm wide, and 3 cm tall. What is its volume?",
+      choices:["42 cm³","12 cm³","21 cm³","84 cm³"], answer:0,
+      explain:"V = 7 × 2 × 3 = 42 cm³." },
+    { q:"A cube has edges that are each 2 cm long. What is its volume?",
+      choices:["8 cm³","6 cm³","12 cm³","4 cm³"], answer:0,
+      explain:"V = 2 × 2 × 2 = 8 cm³." },
+    { q:"A prism has a base area of 9 cm² and a height of 5 cm. What is its volume?",
+      choices:["45 cm³","14 cm³","40 cm³","90 cm³"], answer:0,
+      explain:"V = base area × height = 9 × 5 = 45 cm³." },
+    { q:"A prism has a volume of 100 cm³ and a base area of 25 cm². What is its height?",
+      choices:["4 cm","75 cm","2500 cm","40 cm"], answer:0,
+      explain:"height = volume ÷ base area = 100 ÷ 25 = 4 cm." },
+    { q:"A juice carton holds 250 cm³ of juice. How many millilitres is that? (1 cm³ = 1 mL)",
+      choices:["250 mL","25 mL","2500 mL","2.5 mL"], answer:0,
+      explain:"1 cm³ = 1 mL, so 250 cm³ = 250 mL." },
+  ]},
+
+  area: { name:"Area & Fractions", emoji:"📐", items:[
+    { q:"What is the area of a rectangle that is 1/2 m wide and 1/3 m long? (Area = length × width)",
+      choices:["1/6 m²","2/5 m²","1/5 m²","5/6 m²"], answer:0,
+      explain:"Multiply the side lengths: 1/2 × 1/3 = (1×1)/(2×3) = 1/6 m²." },
+    { q:"A rectangle is 3/4 cm tall and 2 cm wide. What is its area?",
+      choices:["3/8 cm²","6/4 cm² = 1½ cm²","5/4 cm²","2¾ cm²"], answer:1,
+      explain:"3/4 × 2 = 6/4 = 1½ cm². Multiply the fraction by the whole number." },
+    { q:"What is the area of a square with sides of 1/2 unit each?",
+      choices:["1/2 unit²","1/4 unit²","1 unit²","3/4 unit²"], answer:1,
+      explain:"1/2 × 1/2 = 1/4 unit². The area of a half-by-half square is one quarter of a unit square." },
+    { q:"A garden bed is 2½ m long and 4 m wide. What is its area?",
+      choices:["6½ m²","10 m²","8 m²","12 m²"], answer:1,
+      explain:"2½ × 4 = (2 × 4) + (½ × 4) = 8 + 2 = 10 m²." },
+    { q:"A strip of paper is 3 cm long and 1/4 cm wide. What is its area?",
+      choices:["3/4 cm²","1/4 cm²","12 cm²","3¼ cm²"], answer:0,
+      explain:"3 × 1/4 = 3/4 cm². Three quarters of a square centimeter." },
+    { q:"What is the area of a rectangle that is 2/3 m by 3/4 m?",
+      choices:["5/7 m²","1/2 m²","9/12 m²","6 m²"], answer:1,
+      explain:"2/3 × 3/4 = 6/12, which simplifies to 1/2 m²." },
+    { q:"What is the area of a rectangle that is 3/4 m wide and 1/2 m long?",
+      choices:["3/8 m²","1/2 m²","5/8 m²","4/6 m²"], answer:0,
+      explain:"3/4 × 1/2 = (3×1)/(4×2) = 3/8 m²." },
+    { q:"What is the area of a square with sides of 1/3 unit each?",
+      choices:["1/9 unit²","1/6 unit²","1/3 unit²","2/3 unit²"], answer:0,
+      explain:"1/3 × 1/3 = 1/9 unit²." },
+    { q:"A rectangle is 4 cm long and 1/2 cm wide. What is its area?",
+      choices:["2 cm²","4½ cm²","8 cm²","1/8 cm²"], answer:0,
+      explain:"4 × 1/2 = 4/2 = 2 cm²." },
+    { q:"What is the area of a rectangle that is 2/3 m by 6 m?",
+      choices:["4 m²","8 m²","12 m²","2/9 m²"], answer:0,
+      explain:"2/3 × 6 = 12/3 = 4 m²." },
+  ]},
+
+  shapes: { name:"2D Shapes", emoji:"🔷", items:[
+    { q:"What do we call a quadrilateral with 4 equal sides AND 4 right angles?",
+      choices:["Rectangle","Square","Rhombus","Trapezoid"], answer:1,
+      explain:"A square has both 4 equal sides and 4 right angles. It's a special shape that is also a rectangle AND a rhombus!" },
+    { q:"Which statement is TRUE about squares and rectangles?",
+      choices:["Every square is a rectangle","Every rectangle is a square","They are never related","A square has no right angles"], answer:0,
+      explain:"Every square IS a rectangle (4 right angles), but not every rectangle is a square, because a rectangle's sides aren't always all equal." },
+    { q:"How many pairs of parallel sides does a parallelogram have?",
+      choices:["0","1","2","4"], answer:2,
+      explain:"A parallelogram has 2 pairs of parallel sides — both pairs of opposite sides run parallel." },
+    { q:"What is the sum of all four interior angles in any quadrilateral?",
+      choices:["180°","270°","360°","400°"], answer:2,
+      explain:"The angles inside any quadrilateral always add up to 360°." },
+    { q:"A shape has 4 right angles but its sides are NOT all equal in length. What is it?",
+      choices:["Square","Rhombus","Rectangle","Triangle"], answer:2,
+      explain:"A rectangle has 4 right angles, but only opposite sides are equal — so it isn't a square." },
+    { q:"Which shape has 4 equal sides but does NOT need to have right angles?",
+      choices:["Rhombus","Rectangle","Trapezoid","Pentagon"], answer:0,
+      explain:"A rhombus has 4 equal sides, but its angles can be slanted. A square is a special rhombus that also has right angles." },
+    { q:"A trapezoid is best described as a quadrilateral with…",
+      choices:["no parallel sides","at least one pair of parallel sides","all sides equal","only right angles"], answer:1,
+      explain:"A trapezoid has at least one pair of parallel sides. (Parallelograms, with two pairs, are a special case in many definitions.)" },
+    { q:"How many sides does a quadrilateral have?",
+      choices:["4","3","5","6"], answer:0,
+      explain:"\"Quad\" means four — every quadrilateral has 4 sides (and 4 angles)." },
+    { q:"The opposite sides of a parallelogram are always…",
+      choices:["equal in length and parallel","perpendicular","curved","never equal"], answer:0,
+      explain:"In a parallelogram, both pairs of opposite sides are equal in length and parallel." },
+    { q:"A rhombus that also has 4 right angles is called a…",
+      choices:["square","trapezoid","triangle","pentagon"], answer:0,
+      explain:"A rhombus has 4 equal sides; add 4 right angles and it becomes a square." },
+    { q:"Which of these is always true of a rectangle?",
+      choices:["It has 4 right angles","All 4 sides are equal","It has only 3 sides","It has no parallel sides"], answer:0,
+      explain:"A rectangle always has 4 right angles; its opposite sides are equal, but not necessarily all four." },
+  ]},
+
+  /* ===== Module 4: Multiplication & Division of Fractions and Decimals ===== */
+  fracdiv: { name:"Fractions as Division", emoji:"➗", items:[
+    { q:"What is 3 ÷ 4 written as a fraction?",
+      choices:["3/4","4/3","12","1/12"], answer:0,
+      explain:"A fraction IS a division: a ÷ b = a/b. So 3 ÷ 4 = 3/4." },
+    { q:"7 brownies are shared equally among 4 friends. How much does each friend get?",
+      choices:["1¾ brownies","1¼ brownies","¾ of a brownie","4/7 of a brownie"], answer:0,
+      explain:"7 ÷ 4 = 7/4 = 1¾. Each friend gets one whole brownie and three quarters of another." },
+    { q:"Write 9/5 as a mixed number.",
+      choices:["1⅘","1⅕","⅘","2⅕"], answer:0,
+      explain:"9/5 means 9 ÷ 5. 5 goes into 9 once with 4 left over, so 9/5 = 1⅘." },
+    { q:"3 pizzas are shared equally by 4 people. How much pizza does each person get?",
+      choices:["¾ of a pizza","4/3 of a pizza","1¼ pizzas","12 pizzas"], answer:0,
+      explain:"3 ÷ 4 = 3/4. Each person gets three quarters of a pizza." },
+    { q:"Which division does the fraction 5/8 represent?",
+      choices:["5 ÷ 8","8 ÷ 5","5 × 8","8 − 5"], answer:0,
+      explain:"The top number is divided by the bottom number: 5/8 means 5 ÷ 8." },
+    { q:"Write 11/4 as a mixed number.",
+      choices:["2¾","2¼","3¼","1¾"], answer:0,
+      explain:"11 ÷ 4 = 2 remainder 3, so 11/4 = 2¾." },
+    { q:"5 cookies are shared equally between 2 children. How many does each child get?",
+      choices:["2½","1½","3","2¼"], answer:0,
+      explain:"5 ÷ 2 = 5/2 = 2½ cookies each." },
+    { q:"Which division does the fraction 7/10 represent?",
+      choices:["7 ÷ 10","10 ÷ 7","7 × 10","10 + 7"], answer:0,
+      explain:"A fraction is the top divided by the bottom: 7/10 = 7 ÷ 10." },
+    { q:"What is 4 ÷ 5 written as a fraction?",
+      choices:["4/5","5/4","20","1/20"], answer:0,
+      explain:"a ÷ b = a/b, so 4 ÷ 5 = 4/5." },
+  ]},
+
+  fracmult: { name:"Multiplying Fractions", emoji:"✖️", items:[
+    { q:"What is 1/3 of 24?",
+      choices:["8","6","12","72"], answer:0,
+      explain:"\"Of\" means multiply: 1/3 × 24 = 24 ÷ 3 = 8." },
+    { q:"What is 2/5 of 30?",
+      choices:["12","10","15","6"], answer:0,
+      explain:"2/5 × 30 = (30 ÷ 5) × 2 = 6 × 2 = 12." },
+    { q:"What is 1/2 × 1/4?",
+      choices:["1/8","1/6","2/4","1/2"], answer:0,
+      explain:"Multiply tops and bottoms: (1×1)/(2×4) = 1/8." },
+    { q:"What is 2/3 × 3/5?",
+      choices:["2/5","5/8","6/8","5/15"], answer:0,
+      explain:"(2×3)/(3×5) = 6/15, which simplifies to 2/5." },
+    { q:"What is 0.5 × 0.2?",
+      choices:["0.1","1.0","0.7","0.01"], answer:0,
+      explain:"5 tenths × 2 tenths = 10 hundredths = 0.10 = 0.1." },
+    { q:"What is 3/4 of 20?",
+      choices:["15","5","12","80"], answer:0,
+      explain:"3/4 × 20 = (20 ÷ 4) × 3 = 5 × 3 = 15." },
+    { q:"What is 1/4 × 1/3?",
+      choices:["1/12","1/7","2/7","1/2"], answer:0,
+      explain:"Multiply tops and bottoms: (1×1)/(4×3) = 1/12." },
+    { q:"What is 5 × 2/3?",
+      choices:["3⅓","7/3","2⅓","5/6"], answer:0,
+      explain:"5 × 2/3 = 10/3 = 3⅓." },
+    { q:"What is 0.2 × 0.3?",
+      choices:["0.06","0.6","0.5","0.23"], answer:0,
+      explain:"2 tenths × 3 tenths = 6 hundredths = 0.06." },
+  ]},
+
+  fracdivide: { name:"Dividing Fractions", emoji:"🍕", items:[
+    { q:"What is 3 ÷ 1/4? (How many quarters are in 3 wholes?)",
+      choices:["12","3/4","7","1/12"], answer:0,
+      explain:"Each whole has 4 quarters, so 3 wholes have 3 × 4 = 12 quarters." },
+    { q:"What is 1/2 ÷ 3? (Split one half into 3 equal parts.)",
+      choices:["1/6","1/5","3/2","6"], answer:0,
+      explain:"Splitting 1/2 into 3 equal pieces gives sixths: 1/2 ÷ 3 = 1/6." },
+    { q:"What is 4 ÷ 1/2? (How many halves are in 4?)",
+      choices:["8","2","4½","1/8"], answer:0,
+      explain:"Each whole has 2 halves, so 4 wholes have 4 × 2 = 8 halves." },
+    { q:"What is 1/3 ÷ 2?",
+      choices:["1/6","2/3","1/5","6"], answer:0,
+      explain:"Splitting 1/3 into 2 equal parts gives sixths: 1/3 ÷ 2 = 1/6." },
+    { q:"How many 1/5 pieces are in 2 wholes?",
+      choices:["10","7","2/5","1/10"], answer:0,
+      explain:"2 ÷ 1/5: each whole has 5 fifths, so 2 wholes have 2 × 5 = 10 fifths." },
+    { q:"What is 6 ÷ 1/2? (How many halves are in 6?)",
+      choices:["12","3","6½","1/12"], answer:0,
+      explain:"Each whole has 2 halves, so 6 wholes have 6 × 2 = 12 halves." },
+    { q:"What is 1/4 ÷ 2?",
+      choices:["1/8","1/2","2/4","8"], answer:0,
+      explain:"Splitting 1/4 into 2 equal parts gives eighths: 1/4 ÷ 2 = 1/8." },
+    { q:"How many 1/3-cup scoops are in 2 cups?",
+      choices:["6","5","2/3","1/6"], answer:0,
+      explain:"2 ÷ 1/3: each cup has 3 thirds, so 2 cups have 2 × 3 = 6 scoops." },
+    { q:"What is 5 ÷ 1/3?",
+      choices:["15","8","5/3","1/15"], answer:0,
+      explain:"Each whole has 3 thirds, so 5 wholes have 5 × 3 = 15 thirds." },
+  ]},
+
+  fracexpr: { name:"Expressions & Order", emoji:"🧮", items:[
+    { q:"Evaluate: 3 × (1/2 + 1/4)",
+      choices:["2¼","1¾","3/4","9/2"], answer:0,
+      explain:"Do the parentheses first: 1/2 + 1/4 = 3/4. Then 3 × 3/4 = 9/4 = 2¼." },
+    { q:"What is 1/2 × (8 + 2)?",
+      choices:["5","6","9","4½"], answer:0,
+      explain:"Parentheses first: 8 + 2 = 10. Then 1/2 × 10 = 5." },
+    { q:"What is 2/3 × (6 + 9)?",
+      choices:["10","15","30","4"], answer:0,
+      explain:"6 + 9 = 15 first, then 2/3 × 15 = 10." },
+    { q:"Which expression means \"3 times the sum of 1/2 and 1/4\"?",
+      choices:["3 × (1/2 + 1/4)","3 × 1/2 + 1/4","1/2 + 1/4 × 3","3 + 1/2 + 1/4"], answer:0,
+      explain:"\"The sum\" goes in parentheses so it's added first, then multiplied by 3: 3 × (1/2 + 1/4)." },
+    { q:"In 4 × (10 − 3), which part do you calculate FIRST?",
+      choices:["10 − 3 (inside the parentheses)","4 × 10","3 × 4","just go left to right"], answer:0,
+      explain:"Order of operations: always do what's inside the parentheses first (10 − 3 = 7), then 4 × 7 = 28." },
+    { q:"Evaluate: 2 × (3 + 1/2)",
+      choices:["7","6½","3½","2½"], answer:0,
+      explain:"Parentheses first: 3 + 1/2 = 3½. Then 2 × 3½ = 7." },
+    { q:"Evaluate: (1/2 + 1/2) × 8",
+      choices:["8","4","9","16"], answer:0,
+      explain:"1/2 + 1/2 = 1 first, then 1 × 8 = 8." },
+    { q:"What is 1/3 × (9 − 3)?",
+      choices:["2","3","4","18"], answer:0,
+      explain:"9 − 3 = 6 first, then 1/3 × 6 = 2." },
+    { q:"Which expression means \"half the sum of 10 and 6\"?",
+      choices:["1/2 × (10 + 6)","1/2 × 10 + 6","10 + 6 ÷ 2","(1/2 × 10) + 6"], answer:0,
+      explain:"\"The sum\" is grouped in parentheses so it's added first, then halved: 1/2 × (10 + 6) = 8." },
+  ]},
+};
+
+const TOPIC_ORDER = ["volume","formula","area","shapes","fracdiv","fracmult","fracdivide","fracexpr"];
+
+/* ---------- GARDEN ---------- */
+const PLANT_STAGES = ["🟫","🌱","🌿","🌷","🌻","🌳"]; // soil -> sprout -> ... -> tree (free, grows as you answer)
+
+/* ---------- SHOP CATALOG ---------- */
+const SHOP = {
+  pets: { label:"🐾 Pets", items:[
+    {id:"pet_rabbit",   name:"Rabbit",   emoji:"🐰", price:30},
+    {id:"pet_chick",    name:"Chick",    emoji:"🐤", price:30},
+    {id:"pet_bee",      name:"Bee",      emoji:"🐝", price:40},
+    {id:"pet_butterfly",name:"Butterfly",emoji:"🦋", price:50},
+    {id:"pet_turtle",   name:"Turtle",   emoji:"🐢", price:60},
+    {id:"pet_cat",      name:"Cat",      emoji:"🐱", price:80},
+    {id:"pet_dog",      name:"Dog",      emoji:"🐶", price:80},
+    {id:"pet_unicorn",  name:"Unicorn",  emoji:"🦄", price:150},
+  ]},
+  decor: { label:"🌷 Plants & Decor", items:[
+    {id:"d_tulip",    name:"Tulips",   emoji:"🌷", price:20},
+    {id:"d_sunflower",name:"Sunflower",emoji:"🌻", price:25},
+    {id:"d_rose",     name:"Roses",    emoji:"🌹", price:30},
+    {id:"d_mushroom", name:"Mushroom", emoji:"🍄", price:25},
+    {id:"d_cactus",   name:"Cactus",   emoji:"🌵", price:30},
+    {id:"d_tree",     name:"Tree",     emoji:"🌳", price:40},
+    {id:"d_fountain", name:"Fountain", emoji:"⛲", price:70},
+    {id:"d_rainbow",  name:"Rainbow",  emoji:"🌈", price:90},
+  ]},
+  themes: { label:"🖼️ Backgrounds", items:[
+    {id:"bg_day",    name:"Sunny Day", emoji:"☀️", price:0},
+    {id:"bg_sunset", name:"Sunset",    emoji:"🌇", price:60},
+    {id:"bg_night",  name:"Night Sky", emoji:"🌙", price:80},
+    {id:"bg_beach",  name:"Beach",     emoji:"🏖️", price:90},
+    {id:"bg_snow",   name:"Snowy",     emoji:"❄️", price:90},
+    {id:"bg_space",  name:"Space",     emoji:"🚀", price:120},
+  ]},
+  power: { label:"⚡ Power-ups", items:[
+    {id:"pu_hint",  name:"Hint (removes 2 wrong)", emoji:"💡", price:15, consumable:true},
+    {id:"pu_skip",  name:"Skip a Question",        emoji:"⏭️", price:20, consumable:true},
+    {id:"pu_double",name:"Coin Doubler",           emoji:"✨", price:25, consumable:true},
+  ]},
+};
+const THEME_BG = {
+  bg_day:   "linear-gradient(180deg,#bdeefc 0%,#bdeefc 55%,#cfe8b8 55%,#bfe0a3 70%,#9c6638 70%,#7a4f2b 100%)",
+  bg_sunset:"linear-gradient(180deg,#ffb56b 0%,#ff8e72 40%,#ffd9a0 55%,#c9a06b 70%,#7a4f2b 100%)",
+  bg_night: "linear-gradient(180deg,#1b2a4a 0%,#2c3e6b 50%,#3a4a6b 55%,#3a5a3a 70%,#2b3a1f 100%)",
+  bg_beach: "linear-gradient(180deg,#8fe0ff 0%,#bdf0ff 50%,#ffe9a8 60%,#f5d98a 75%,#e6c266 100%)",
+  bg_snow:  "linear-gradient(180deg,#cfeaff 0%,#eaf6ff 55%,#ffffff 60%,#e8eef2 75%,#cdd6dc 100%)",
+  bg_space: "linear-gradient(180deg,#0b0b2a 0%,#1a1a4a 50%,#2a1a4a 60%,#3a2a4a 75%,#241a33 100%)",
+};
+function findItem(id){ for(const c in SHOP){ const it=SHOP[c].items.find(x=>x.id===id); if(it) return it; } return null; }
+
+/* ---------- STATE ---------- */
+let state = {
+  coins:0, streak:0, bestStreak:0,
+  topicKey:"mixed", questions:[], idx:0, correct:0,
+  plots:[0,0,0,0,0],          // garden growth (persists, grows as you answer)
+  owned:["bg_day"],           // ids of pets/decor/themes owned
+  powerups:{pu_hint:0, pu_skip:0, pu_double:0},
+  background:"bg_day",
+  doubleActive:false          // next correct answer earns double coins
+};
+
+/* ---------- PERSISTENCE (server-side via proxy, with localStorage fallback) ---------- */
+function progressSnapshot(){
+  return { coins:state.coins, plots:state.plots, owned:state.owned,
+           powerups:state.powerups, background:state.background, bestStreak:state.bestStreak };
+}
+function lsKey(){ return "mathGarden:"+STUDENT; }
+function resetProgress(){   // wipe in-memory progress back to a fresh garden
+  state.coins=0; state.plots=[0,0,0,0,0]; state.owned=["bg_day"];
+  state.powerups={pu_hint:0,pu_skip:0,pu_double:0}; state.background="bg_day";
+  state.bestStreak=0; state.streak=0; state.doubleActive=false;
+}
+async function saveProgress(){
+  const snap=progressSnapshot();
+  try{ localStorage.setItem(lsKey(), JSON.stringify(snap)); }catch(e){}
+  try{ await fetch("/api/save?user="+encodeURIComponent(STUDENT),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(snap)}); }catch(e){}
+}
+async function loadProgress(){
+  resetProgress();   // start fresh so one player's data never leaks into another's
+  let data=null;
+  try{ const r=await fetch("/api/load?user="+encodeURIComponent(STUDENT)); if(r.ok) data=await r.json(); }catch(e){}
+  if(!data || !Object.keys(data).length){
+    try{ const ls=localStorage.getItem(lsKey()); if(ls) data=JSON.parse(ls); }catch(e){}
+  }
+  if(data && Object.keys(data).length){
+    state.coins=data.coins||0;
+    state.plots=Array.isArray(data.plots)?data.plots:[0,0,0,0,0];
+    state.owned=Array.isArray(data.owned)?data.owned:["bg_day"];
+    state.powerups=Object.assign({pu_hint:0,pu_skip:0,pu_double:0}, data.powerups||{});
+    state.background=data.background||"bg_day";
+    state.bestStreak=data.bestStreak||0;
+  }
+  if(!state.owned.includes("bg_day")) state.owned.push("bg_day");
+}
+
+/* ---------- SOUND (tiny Web Audio beeps, no files needed) ---------- */
+let audioCtx=null;
+function beep(freq, dur=0.12, type="sine", vol=0.18){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+    o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function soundCorrect(){ beep(660,0.1,"sine"); setTimeout(()=>beep(880,0.14,"sine"),90); }
+function soundWrong(){ beep(220,0.18,"sawtooth",0.12); }
+function soundReward(){ beep(523,0.1); setTimeout(()=>beep(659,0.1),100); setTimeout(()=>beep(784,0.18),200); }
+
+/* ---------- HELPERS ---------- */
+const $ = id => document.getElementById(id);
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* Pick n questions, preferring ones NOT shown in the previous round of this topic. */
+const recentSeen={};   // topicKey -> Set of question texts shown last round
+function pickFresh(items, n, key){
+  const recent = recentSeen[key] || new Set();
+  const fresh = shuffle(items.filter(it=>!recent.has(it.q)));
+  const stale = shuffle(items.filter(it=>recent.has(it.q)));
+  let chosen = fresh.slice(0, n);
+  if(chosen.length < n) chosen = chosen.concat(stale.slice(0, n-chosen.length));
+  return shuffle(chosen);
+}
+
+/* Honestly report where this round's questions actually came from. */
+function setSourceIndicator(kimiCount, total){
+  const el=$("kimiStatus"); if(!el) return;
+  if(!CONFIG.USE_KIMI){ el.textContent="Question source: built-in bank"; return; }
+  if(kimiCount===total) el.textContent=`This quiz: ${total} fresh AI questions 🤖`;
+  else if(kimiCount===0) el.textContent="This quiz: built-in bank 📖 (KIMI not reached — are you on the proxy?)";
+  else el.textContent=`This quiz: ${kimiCount} AI 🤖 + ${total-kimiCount} built-in 📖`;
+}
+
+/* ---------- BUILD START SCREEN ---------- */
+function renderTopics(){
+  const grid=$("topicGrid"); grid.innerHTML="";
+  TOPIC_ORDER.forEach(key=>{
+    const t=BANK[key];
+    const b=document.createElement("button");
+    b.className="topic";
+    b.innerHTML=`<span class="emoji">${t.emoji}</span>${t.name}`;
+    b.onclick=()=>startRound(key);
+    grid.appendChild(b);
+  });
+}
+
+/* ---------- START A ROUND ---------- */
+async function startRound(topicKey){
+  if(audioCtx==null){ try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+  state.topicKey=topicKey;
+  state.idx=0; state.correct=0; state.streak=0; state.doubleActive=false;
+  updateStats();
+
+  // Build the question list, preferring questions NOT shown in the previous round
+  let all=[];
+  if(topicKey==="mixed"){ TOPIC_ORDER.forEach(k=>all.push(...BANK[k].items.map(it=>({...it,_topic:k})))); }
+  else { all=BANK[topicKey].items.map(it=>({...it,_topic:topicKey})); }
+  let pool=pickFresh(all, CONFIG.questionsPerRound, topicKey);
+
+  // Generate fresh questions with KIMI. Each slot tries the AI; if a call fails,
+  // that slot quietly keeps its built-in question so the game never breaks.
+  let kimiCount=0;
+  if(CONFIG.USE_KIMI){
+    showLoading(true);
+    const topics = pool.map(it => it._topic);
+    const results = await Promise.all(topics.map(t =>
+      kimiGenerateQuestion(t).catch(e => { console.warn("KIMI fallback:", e); return null; })
+    ));
+    results.forEach((q,i)=>{ if(q && validQuestion(q)){ q._topic = topics[i]; pool[i] = q; kimiCount++; } });
+    showLoading(false);
+  }
+
+  // Remember what we showed so next round can avoid repeats; report the real source
+  recentSeen[topicKey] = new Set(pool.map(it=>it.q));
+  setSourceIndicator(kimiCount, pool.length);
+
+  state.questions=pool;
+  $("topicLabel").textContent = topicKey==="mixed" ? "🎲 All Topics" : (BANK[topicKey].emoji+" "+BANK[topicKey].name);
+  show("quizScreen");
+  applyBackground();
+  renderGarden("plots","pets");
+  renderQuestion();
+}
+
+/* ---------- RENDER ONE QUESTION ---------- */
+function renderQuestion(){
+  const q=state.questions[state.idx];
+  $("qCounter").textContent=`Question ${state.idx+1} of ${state.questions.length}`;
+  $("progressBar").style.width = (state.idx/state.questions.length*100)+"%";
+  $("questionText").textContent=q.q;
+  $("feedback").className="feedback";
+  $("nextBtn").classList.add("hidden");
+  renderPowerbar();
+
+  const box=$("choices"); box.innerHTML="";
+  // shuffle choices but track correct
+  const order=shuffle(q.choices.map((c,i)=>({c,i})));
+  order.forEach(({c,i})=>{
+    const btn=document.createElement("button");
+    btn.className="choice"; btn.textContent=c;
+    btn.onclick=()=>answer(btn, i===q.answer, q);
+    box.appendChild(btn);
+  });
+}
+
+/* ---------- HANDLE AN ANSWER ---------- */
+function answer(btn, isCorrect, q){
+  [...$("choices").children].forEach(b=>b.disabled=true);
+  const fb=$("feedback");
+  if(isCorrect){
+    btn.classList.add("correct");
+    state.correct++; state.streak++; state.bestStreak=Math.max(state.bestStreak,state.streak);
+    let earned=5 + Math.min(state.streak-1,5); // streak bonus up to +5
+    let doubled=false;
+    if(state.doubleActive){ earned*=2; state.doubleActive=false; doubled=true; }
+    state.coins+=earned;
+    soundCorrect();
+    popReward("🪙 +"+earned);
+    growGarden();
+    fb.className="feedback good show";
+    fb.innerHTML=`<b>🎉 Correct! +${earned} coins${doubled?" (✨ doubled!)":""}</b>${q.explain}`;
+  }else{
+    btn.classList.add("wrong");
+    state.streak=0;
+    // reveal the correct one
+    [...$("choices").children].forEach(b=>{ if(b.textContent===q.choices[q.answer]) b.classList.add("correct"); });
+    soundWrong();
+    fb.className="feedback bad show";
+    fb.innerHTML=`<b>🌱 Not quite — keep growing!</b>The answer is <b style="display:inline">${q.choices[q.answer]}</b>. ${q.explain}`;
+  }
+  updateStats();
+  renderPowerbar();
+  saveProgress();
+  $("nextBtn").textContent = (state.idx+1>=state.questions.length) ? "See My Garden 🌻" : "Next ➡️";
+  $("nextBtn").classList.remove("hidden");
+}
+
+/* ---------- POWER-UPS ---------- */
+function renderPowerbar(){
+  const bar=$("powerbar"); bar.innerHTML="";
+  const answered=[...$("choices").children].some(b=>b.disabled);
+  const defs=[{id:"pu_hint",label:"💡 Hint"},{id:"pu_skip",label:"⏭️ Skip"},{id:"pu_double",label:"✨ x2"}];
+  let any=false;
+  defs.forEach(d=>{
+    const n=state.powerups[d.id]||0;
+    if(n>0) any=true;
+    const b=document.createElement("button");
+    b.className="pu"; b.textContent=`${d.label} ×${n}`;
+    b.disabled = n<=0 || answered || (d.id==="pu_double" && state.doubleActive);
+    b.onclick=()=>usePower(d.id);
+    bar.appendChild(b);
+  });
+  bar.style.display = any ? "flex" : "none";
+}
+function usePower(id){
+  if((state.powerups[id]||0)<=0) return;
+  const q=state.questions[state.idx];
+  if(id==="pu_hint"){
+    const wrong=[...$("choices").children].filter(b=>!b.disabled && b.textContent!==q.choices[q.answer]);
+    shuffle(wrong).slice(0,2).forEach(b=>{ b.disabled=true; b.style.opacity=.3; });
+    state.powerups[id]--; toast("💡 Two wrong answers removed!");
+  } else if(id==="pu_skip"){
+    state.powerups[id]--; toast("⏭️ Question skipped!");
+    saveProgress();
+    state.idx++;
+    if(state.idx>=state.questions.length) endRound(); else renderQuestion();
+    return;
+  } else if(id==="pu_double"){
+    state.doubleActive=true; state.powerups[id]--; toast("✨ Your next correct answer earns double!");
+  }
+  renderPowerbar(); saveProgress();
+}
+
+/* ---------- NEXT ---------- */
+function nextQuestion(){
+  state.idx++;
+  if(state.idx>=state.questions.length){ endRound(); return; }
+  renderQuestion();
+}
+
+/* ---------- GARDEN GROWTH ---------- */
+function growGarden(){
+  // grow a random not-yet-maxed plot (free visual progress as you answer)
+  let candidates=state.plots.map((v,i)=>i).filter(i=>state.plots[i]<PLANT_STAGES.length-1);
+  if(candidates.length){
+    const pick=candidates[Math.floor(Math.random()*candidates.length)];
+    state.plots[pick]++;
+  }
+  renderGarden("plots","pets",true);
+}
+
+function applyBackground(){
+  const bg=THEME_BG[state.background]||THEME_BG.bg_day;
+  document.querySelectorAll(".garden, .biggarden").forEach(g=>{ g.style.background=bg; });
+}
+
+function renderGarden(plotsId, petsId, animate){
+  const p=$(plotsId); p.innerHTML="";
+  state.plots.forEach((stage,i)=>{
+    const s=document.createElement("div");
+    s.className="plot"+(animate?" grow":"");
+    s.textContent=PLANT_STAGES[stage];
+    p.appendChild(s);
+  });
+  // pets row = owned pets
+  const petBox=$(petsId);
+  petBox.innerHTML = state.owned.filter(id=>id.startsWith("pet_")).map(id=>findItem(id).emoji).join("");
+  // decorations placed along the ground inside this garden
+  const garden=petBox.closest(".garden");
+  garden.querySelectorAll(".decor").forEach(d=>d.remove());
+  state.owned.filter(id=>id.startsWith("d_")).forEach((id,i)=>{
+    const d=document.createElement("div");
+    d.className="decor"; d.textContent=findItem(id).emoji;
+    d.style.left=(4+i*11.5)+"%";
+    garden.appendChild(d);
+  });
+}
+
+/* ---------- CONFETTI ---------- */
+function launchConfetti(n){
+  const colors=["#ffc83d","#ff6b6b","#4caf50","#3fa3d4","#a55eea","#ff8e72","#7ed957"];
+  for(let i=0;i<n;i++){
+    const c=document.createElement("div"); c.className="confetti";
+    c.style.left=Math.random()*100+"vw";
+    c.style.background=colors[i%colors.length];
+    if(Math.random()<.4) c.style.borderRadius="50%";
+    const dur=2+Math.random()*2;
+    c.style.animationDuration=dur+"s";
+    c.style.animationDelay=(Math.random()*0.6)+"s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),(dur+0.7)*1000);
+  }
+}
+
+/* ---------- POPUP REWARD ---------- */
+function popReward(txt){
+  const d=document.createElement("div");
+  d.className="reward-pop"; d.textContent=txt;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),1100);
+}
+
+/* ---------- STATS ---------- */
+function updateStats(){
+  $("coinCount").textContent=state.coins;
+  $("streakCount").textContent=state.streak;
+}
+
+/* ---------- END ROUND ---------- */
+function endRound(){
+  $("progressBar").style.width="100%";
+  const total=state.questions.length, got=state.correct;
+  const pct=Math.round(got/total*100);
+  let title,emoji,msg;
+  let confetti;
+  if(pct===100){ title=`PERFECT, ${STUDENT}! 🌟`; emoji="🏆"; confetti=150; msg=`Amazing — every single one correct! You now have ${state.coins} coins to spend in the shop. 🪙`; }
+  else if(pct>=75){ title=`Awesome, ${STUDENT}! 🎉`; emoji="🌻"; confetti=100; msg=`Wonderful gardening! You now have ${state.coins} coins. 🪙`; }
+  else if(pct>=50){ title=`Nice work, ${STUDENT}! 🌿`; emoji="🌱"; confetti=50; msg=`Keep practicing and your garden will grow even more! You have ${state.coins} coins. 🪙`; }
+  else { title=`Good start, ${STUDENT}! 🌱`; emoji="🪴"; confetti=25; msg=`Every gardener starts small — try again and watch your garden grow! You have ${state.coins} coins. 🪙`; }
+  $("resultTitle").textContent=title;
+  $("resultEmoji").textContent=emoji;
+  // big "X / 5 correct" + star rating (one star per correct answer)
+  $("resultScore").textContent=`${got} / ${total} correct`;
+  let stars="";
+  for(let i=0;i<total;i++){ stars += `<span class="${i<got?"on":"off"}" style="animation-delay:${i*0.12}s">★</span>`; }
+  $("resultStars").innerHTML=stars;
+  $("resultText").textContent=msg + (state.bestStreak>=3?`  🔥 Best streak: ${state.bestStreak}!`:"");
+  renderGarden("plotsResult","petsResult");
+  applyBackground();
+  saveProgress();
+  soundReward();
+  show("resultScreen");
+  launchConfetti(confetti);
+}
+
+/* ---------- SCREEN SWITCH ---------- */
+function show(screen){
+  if(screen!=="gardenScreen") stopGardenAnim();
+  ["loginScreen","startScreen","quizScreen","resultScreen","gardenScreen"].forEach(s=>$(s).classList.toggle("hidden", s!==screen));
+  $("topbar").style.display = (screen==="loginScreen") ? "none" : "flex";
+}
+
+/* ============================================================
+   ANIMATED GARDEN PAGE — pets wander/fly, plants fill the scene
+   ============================================================ */
+let gardenAnim=null, sprites=[], plantSpots=[];
+const FLYERS=["pet_bee","pet_butterfly"];
+
+function openGarden(){
+  if(audioCtx==null){ try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+  show("gardenScreen");   // make visible first so we can measure the scene
+  buildGarden();
+  startGardenAnim();
+}
+
+function buildGarden(){
+  $("gardenTitle").textContent = `${STUDENT}'s Garden 🌳`;
+  applyBackground();
+  const scene=$("bigGarden");
+  const dark = (state.background==="bg_night" || state.background==="bg_space");
+  scene.innerHTML = `<div class="sun">${dark?"🌙":"☀️"}</div>`;
+  const w=scene.clientWidth||600, h=scene.clientHeight||400;
+
+  // NIGHT AMBIANCE: dim overlay + twinkling stars (dark themes only)
+  if(dark){
+    const dim=document.createElement("div"); dim.className="nightdim"; scene.appendChild(dim);
+    for(let i=0;i<14;i++){
+      const st=document.createElement("div"); st.className="star";
+      st.textContent = Math.random()<.5 ? "✦" : "·";
+      st.style.left=(Math.random()*96)+"%";
+      st.style.top=(Math.random()*50)+"%";
+      st.style.fontSize=(10+Math.random()*12)+"px";
+      st.style.animationDelay=(Math.random()*2.2)+"s";
+      scene.appendChild(st);
+    }
+  }
+
+  // PLANTS: grown plant-plots (free progress) + purchased decorations
+  const plants=[];
+  state.plots.forEach(stage=>{ if(stage>0) plants.push(PLANT_STAGES[stage]); });
+  state.owned.filter(id=>id.startsWith("d_")).forEach(id=>plants.push(findItem(id).emoji));
+  const n=Math.max(plants.length,1);
+  plantSpots=[];
+  plants.forEach((em,i)=>{
+    const d=document.createElement("div");
+    d.className="gplant"; d.textContent=em;
+    const leftPct = 4 + (i+0.5)*(92/n);
+    d.style.left=leftPct+"%";
+    d.style.fontSize=(26+Math.random()*14)+"px";
+    d.style.animationDelay=(i*0.25)+"s";
+    scene.appendChild(d);
+    plantSpots.push({ x: leftPct/100*w, y: h*0.60 });   // a perch just above each flower
+  });
+
+  // PETS: each becomes a moving sprite
+  sprites=[];
+  state.owned.filter(id=>id.startsWith("pet_")).forEach(id=>{
+    const it=findItem(id), flyer=FLYERS.includes(id);
+    const el=document.createElement("div");
+    el.className="sprite"; el.textContent=it.emoji;
+    el.style.fontSize=(id==="pet_unicorn"?46:34)+"px";
+    el.title=it.name;
+    el.onclick=()=>{ el.animate([{transform:el.style.transform+" translateY(0)"},{transform:el.style.transform+" translateY(-24px)"},{transform:el.style.transform+" translateY(0)"}],{duration:480,easing:"ease-out"}); beep(700,0.1); };
+    scene.appendChild(el);
+    const speed = id==="pet_turtle"?0.35 : id==="pet_bee"?1.9 : id==="pet_butterfly"?1.3 : 0.9;
+    sprites.push({
+      el, type: flyer?"flyer":"walker", isUnicorn:(id==="pet_unicorn"),
+      x: Math.random()*(w-50),
+      y: flyer ? 20+Math.random()*(h*0.45) : h*0.70 + Math.random()*(h*0.18),
+      vx:(0.5+Math.random()*0.6)*speed*(Math.random()<.5?-1:1),
+      vy: flyer ? (0.3+Math.random()*0.6)*(Math.random()<.5?-1:1) : 0,
+      bob: Math.random()*6.28, flip:1, target:null, landed:0, tick:Math.floor(Math.random()*10)
+    });
+  });
+
+  // FIREFLIES at night (drift around the whole scene, glowing)
+  if(dark){
+    for(let i=0;i<6;i++){
+      const el=document.createElement("div"); el.className="firefly";
+      el.style.animationDelay=(Math.random()*1.6)+"s";
+      scene.appendChild(el);
+      sprites.push({
+        el, type:"firefly",
+        x: Math.random()*(w-10), y: 10+Math.random()*(h*0.8),
+        vx:(Math.random()<.5?-1:1)*(0.3+Math.random()*0.5),
+        vy:(Math.random()<.5?-1:1)*(0.3+Math.random()*0.5),
+        bob:0, flip:1, target:null, landed:0, tick:0
+      });
+    }
+  }
+
+  // Empty-state message + growth meter
+  const petCount=sprites.filter(s=>s.type!=="firefly").length, plantCount=plants.length;
+  $("gardenEmpty").style.display = (petCount||plantCount) ? "none" : "block";
+  const plotProgress=state.plots.reduce((a,b)=>a+b,0);          // 0..25
+  const shopThings=state.owned.filter(id=>!id.startsWith("bg_")).length;
+  const growth=Math.min(100, Math.round((plotProgress/25)*50 + Math.min(shopThings,12)/12*50));
+  $("growthFill").style.width=growth+"%";
+  $("growthLabel").textContent=`Garden growth: ${growth}%  •  🐾 ${petCount} pet${petCount===1?"":"s"}  •  🌷 ${plantCount} plant${plantCount===1?"":"s"}`;
+}
+
+function spawnSpark(scene,x,y){
+  const sp=document.createElement("div"); sp.className="spark";
+  sp.textContent = Math.random()<.5 ? "✨" : "⭐";
+  sp.style.left=(x+10+Math.random()*8)+"px"; sp.style.top=(y+6+Math.random()*8)+"px";
+  scene.appendChild(sp);
+  sp.animate([{opacity:.9,transform:"scale(1)"},{opacity:0,transform:"translateY(12px) scale(.4)"}],{duration:900,easing:"ease-out"});
+  setTimeout(()=>sp.remove(),900);
+}
+
+function startGardenAnim(){
+  const scene=$("bigGarden");
+  stopGardenAnim();
+  function step(){
+    const w=scene.clientWidth, h=scene.clientHeight;
+    sprites.forEach(s=>{
+      let drawY;
+      if(s.type==="walker"){
+        s.x+=s.vx;
+        if(s.x<4){ s.x=4; s.vx=Math.abs(s.vx); }
+        if(s.x>w-46){ s.x=w-46; s.vx=-Math.abs(s.vx); }
+        s.bob+=0.18; drawY=s.y+Math.sin(s.bob)*4;        // walking bob
+        s.flip = s.vx<0 ? -1 : 1;
+        if(s.isUnicorn && (++s.tick % 9 === 0)) spawnSpark(scene, s.x, drawY);  // sparkle trail
+      }
+      else if(s.type==="firefly"){
+        s.x+=s.vx; s.y+=s.vy;
+        if(s.x<2){s.x=2;s.vx=Math.abs(s.vx);} if(s.x>w-9){s.x=w-9;s.vx=-Math.abs(s.vx);}
+        if(s.y<6){s.y=6;s.vy=Math.abs(s.vy);} if(s.y>h*0.85){s.y=h*0.85;s.vy=-Math.abs(s.vy);}
+        if(Math.random()<0.02){ s.vx+=(Math.random()-0.5)*0.3; s.vy+=(Math.random()-0.5)*0.3; } // wander
+        drawY=s.y;
+      }
+      else { // flyer: roam, occasionally land on a flower, rest, take off
+        if(s.landed>0){
+          s.landed--; drawY=s.y;
+          if(s.landed===0){ s.vx=(Math.random()<.5?-1:1)*(0.6+Math.random()*0.6); s.vy=-(0.4+Math.random()*0.5); }
+        } else if(s.target){
+          const dx=s.target.x-s.x, dy=s.target.y-s.y, d=Math.hypot(dx,dy)||1;
+          if(d<6){ s.landed=120+Math.floor(Math.random()*180); s.target=null; }   // ~2-5s rest
+          else { s.x+=dx/d*1.3; s.y+=dy/d*1.3; }
+          drawY=s.y; s.flip = (s.target && s.target.x<s.x) ? -1 : s.flip;
+        } else {
+          s.x+=s.vx; s.y+=s.vy;
+          if(s.x<4){s.x=4;s.vx=Math.abs(s.vx);} if(s.x>w-46){s.x=w-46;s.vx=-Math.abs(s.vx);}
+          if(s.y<8){s.y=8;s.vy=Math.abs(s.vy);} if(s.y>h*0.6){s.y=h*0.6;s.vy=-Math.abs(s.vy);}
+          if(plantSpots.length && Math.random()<0.004){ s.target=plantSpots[Math.floor(Math.random()*plantSpots.length)]; }
+          s.flip = s.vx<0 ? -1 : 1; drawY=s.y;
+        }
+      }
+      s.el.style.left=s.x+"px";
+      s.el.style.top=drawY+"px";
+      if(s.type!=="firefly") s.el.style.transform=`scaleX(${s.flip})`;
+    });
+    gardenAnim=requestAnimationFrame(step);
+  }
+  gardenAnim=requestAnimationFrame(step);
+}
+function stopGardenAnim(){ if(gardenAnim){ cancelAnimationFrame(gardenAnim); gardenAnim=null; } }
+
+/* ============================================================
+   KIMI (Moonshot) INTEGRATION — ready to switch on later.
+   ------------------------------------------------------------
+   To use: set CONFIG.USE_KIMI = true and provide an API key.
+   IMPORTANT: A raw API key in a public webpage is visible to anyone.
+   Safe ways to use it:
+     1) Run this file locally on your own machine (key stays with you), OR
+     2) Put the key in a tiny backend/proxy you control and call that instead.
+   This function asks Kimi for ONE Grade-5 question as strict JSON and
+   returns it in the same shape as the built-in bank.
+   ============================================================ */
+async function kimiGenerateQuestion(topicKey){
+  const topicNames = {
+    volume:"counting unit cubes and the concept of volume",
+    formula:"finding the volume of rectangular prisms using V = length × width × height or base area × height",
+    area:"finding the area of rectangles with fractional side lengths",
+    shapes:"classifying 2D shapes and quadrilaterals (square, rectangle, rhombus, trapezoid, parallelogram)",
+    fracdiv:"interpreting a fraction as division (for example 3 ÷ 4 = 3/4) and equal-sharing problems with mixed-number answers",
+    fracmult:"finding a fraction of a set (like 1/3 of 24), multiplying a whole number by a fraction, and multiplying a fraction by a fraction (including simple decimals like 0.5 × 0.2)",
+    fracdivide:"dividing a whole number by a unit fraction (like 3 ÷ 1/4) and a unit fraction by a whole number (like 1/2 ÷ 3), using whole numbers and unit fractions only",
+    fracexpr:"evaluating and interpreting numerical expressions with parentheses and fractions, like 3 × (1/2 + 1/4), and order of operations",
+    mixed:"Grade 5 fractions, decimals, volume, area, and 2D shapes"
+  };
+  // Variety helpers so the AI doesn't keep producing the same question:
+  const contexts=["a garden","a toy box","baking","a fish tank","building blocks","a lunchbox","a pool","a backpack","sports","a craft project","candy","a bookshelf"];
+  const ctx=contexts[Math.floor(Math.random()*contexts.length)];
+  const nonce=Math.random().toString(36).slice(2,8);
+  const prompt = `Create ONE original multiple-choice math question for a Grade 5 student about ${topicNames[topicKey]||topicNames.mixed}.
+Make it FRESH and DIFFERENT every time: use new, randomized numbers and a real-world setting (try a context like "${ctx}"). Avoid common textbook examples and do not reuse the same numbers each time.
+Return ONLY valid JSON, no extra text, in exactly this format:
+{"q":"the question","choices":["A","B","C","D"],"answer":0,"explain":"a friendly one-sentence explanation"}
+"answer" is the index (0-3) of the correct choice in "choices". Make sure exactly one choice is correct and the others are reasonable but wrong. (variation id: ${nonce})`;
+
+  // NOTE: we call the local proxy (CONFIG.kimi.endpoint = "/api/kimi"), which
+  // adds the API key server-side. No key is ever sent from the browser.
+  const res = await fetch(CONFIG.kimi.endpoint, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      model: CONFIG.kimi.model,
+      temperature: 1.1,
+      messages:[
+        {role:"system", content:"You are a friendly Grade 5 math teacher who writes clear, age-appropriate quiz questions. Every question you write uses different numbers and contexts."},
+        {role:"user", content: prompt}
+      ]
+    })
+  });
+  if(!res.ok) throw new Error("KIMI HTTP "+res.status);
+  const data = await res.json();
+  const text = data.choices[0].message.content.trim();
+  const json = JSON.parse(text.replace(/```json|```/g,"").trim());
+  json._topic = topicKey;
+  return json;
+}
+
+/* Validate an AI-generated question has the shape we expect. */
+function validQuestion(q){
+  return q && typeof q.q==="string" && Array.isArray(q.choices) && q.choices.length===4
+    && typeof q.answer==="number" && q.answer>=0 && q.answer<4 && typeof q.explain==="string";
+}
+
+/* Simple loading overlay while KIMI generates questions. */
+function showLoading(on){
+  let el=$("loadingOverlay");
+  if(on){
+    if(!el){
+      el=document.createElement("div");
+      el.id="loadingOverlay";
+      el.style.cssText="position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;color:#2e7d34;font-weight:bold;";
+      el.innerHTML="<div style='font-size:60px;animation:rise 1s infinite alternate'>🌱</div><div>Growing fresh questions…</div>";
+      document.body.appendChild(el);
+    }
+  } else if(el){ el.remove(); }
+}
+
+/* ---------- SHOP UI ---------- */
+let currentTab="pets";
+function openShop(){ if(audioCtx==null){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} $("shopModal").classList.remove("hidden"); renderShop(); }
+function closeShop(){ $("shopModal").classList.add("hidden"); }
+
+function renderShop(){
+  $("shopBalance").textContent=state.coins;
+  const tabs=$("shopTabs"); tabs.innerHTML="";
+  Object.keys(SHOP).forEach(cat=>{
+    const b=document.createElement("button");
+    b.className="tab"+(cat===currentTab?" active":"");
+    b.textContent=SHOP[cat].label;
+    b.onclick=()=>{ currentTab=cat; renderShop(); };
+    tabs.appendChild(b);
+  });
+  const grid=$("shopGrid"); grid.innerHTML="";
+  const isPower=currentTab==="power", isTheme=currentTab==="themes";
+  SHOP[currentTab].items.forEach(it=>{
+    const owned=state.owned.includes(it.id);
+    const card=document.createElement("div");
+    card.className="item"+((owned&&!isPower)?" owned":"");
+    let html=`<span class="ic">${it.emoji}</span><div class="nm">${it.name}</div>`;
+    if(isPower){
+      html+=`<div class="qty">You have: ${state.powerups[it.id]||0}</div><div class="price">🪙 ${it.price}</div>`+
+            `<button class="buy" ${state.coins<it.price?"disabled":""}>Buy</button>`;
+    } else if(owned){
+      html+=`<div class="owned-tag">✓ Owned</div>`;
+      if(isTheme){ const on=state.background===it.id;
+        html+=`<button class="equip ${on?"on":""}">${on?"✓ Using":"Use"}</button>`; }
+    } else {
+      const free=it.price===0;
+      html+=`<div class="price">${free?"Free":"🪙 "+it.price}</div>`+
+            `<button class="buy" ${state.coins<it.price?"disabled":""}>${free?"Get":"Buy"}</button>`;
+    }
+    card.innerHTML=html;
+    const buyBtn=card.querySelector(".buy"); if(buyBtn) buyBtn.onclick=()=>buyItem(it, currentTab);
+    const eqBtn=card.querySelector(".equip"); if(eqBtn) eqBtn.onclick=()=>{ state.background=it.id; applyBackground(); saveProgress(); renderShop(); };
+    grid.appendChild(card);
+  });
+}
+
+function buyItem(it, cat){
+  if(state.coins<it.price){ toast("Not enough coins — keep playing! 🪙"); return; }
+  state.coins-=it.price;
+  if(cat==="power"){ state.powerups[it.id]=(state.powerups[it.id]||0)+1; }
+  else if(!state.owned.includes(it.id)){
+    state.owned.push(it.id);
+    if(cat==="themes"){ state.background=it.id; applyBackground(); } // auto-use a newly bought background
+  }
+  soundReward(); toast(`${it.emoji} ${it.name} ${cat==="power"?"added":"unlocked"}!`);
+  updateStats(); renderShop(); renderGarden("plots","pets"); saveProgress();
+  // if the big animated garden is open, refresh it so the new pet/plant appears right away
+  if(!$("gardenScreen").classList.contains("hidden")){ buildGarden(); startGardenAnim(); }
+}
+
+function toast(msg){
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1700);
+}
+
+/* ---------- WIRE UP BUTTONS ---------- */
+renderTopics();
+$("mixedBtn").onclick=()=>startRound("mixed");
+$("nextBtn").onclick=nextQuestion;
+$("playAgainBtn").onclick=()=>startRound(state.topicKey);
+$("homeBtn").onclick=()=>{ renderWelcome(); show("startScreen"); };
+$("shopBtn").onclick=openShop;
+$("shopClose").onclick=closeShop;
+$("shopModal").onclick=(e)=>{ if(e.target.id==="shopModal") closeShop(); };
+$("visitGardenBtn").onclick=openGarden;
+$("resultGardenBtn").onclick=openGarden;
+$("gardenShopBtn").onclick=openShop;
+$("gardenHomeBtn").onclick=()=>{ renderWelcome(); show("startScreen"); };
+$("kimiStatus").textContent = CONFIG.USE_KIMI ? "Question source: KIMI (AI) — start a quiz to confirm" : "Question source: built-in bank";
+
+/* ---------- PERSONALIZED WELCOME / PROGRESS RECALL ---------- */
+function renderWelcome(){
+  $("welcomeTitle").textContent = `Welcome to Math Garden, ${STUDENT}! 🌱`;
+  const pets = state.owned.filter(id=>id.startsWith("pet_")).length;
+  const decor = state.owned.filter(id=>id.startsWith("d_")).length;
+  const hasProgress = state.coins>0 || pets>0 || decor>0 || state.bestStreak>0 || state.plots.some(p=>p>0);
+  const box=$("welcomeBack");
+  if(hasProgress){
+    box.style.display="block";
+    box.innerHTML = `<b>Welcome back, ${STUDENT}! 👋</b><br>`+
+      `🪙 ${state.coins} coins &nbsp;•&nbsp; 🐾 ${pets} pet${pets===1?"":"s"} &nbsp;•&nbsp; 🌷 ${decor} decoration${decor===1?"":"s"}`+
+      (state.bestStreak>=3?` &nbsp;•&nbsp; 🔥 best streak ${state.bestStreak}`:"");
+  } else {
+    box.style.display="none";
+  }
+}
+
+/* ---------- LOGIN / PLAYER PICKER ---------- */
+let KNOWN_USERS=["Sophie","Andy"];   // always offered, even before they've played
+async function fetchUsers(){
+  try{ const r=await fetch("/api/users"); if(r.ok){ const d=await r.json(); return d.users||[]; } }catch(e){}
+  // fallback: scan localStorage for saved players
+  const found=[];
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith("mathGarden:")) found.push(k.slice(11)); } }catch(e){}
+  return found;
+}
+async function renderLogin(){
+  const saved=await fetchUsers();
+  const users=Array.from(new Set([...KNOWN_USERS, ...saved]));
+  const grid=$("userGrid"); grid.innerHTML="";
+  users.forEach(name=>{
+    const b=document.createElement("button");
+    b.className="topic"; b.innerHTML=`<span class="emoji">👤</span>${name}`;
+    b.onclick=()=>selectUser(name);
+    grid.appendChild(b);
+  });
+}
+async function selectUser(name){
+  if(audioCtx==null){ try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+  STUDENT=name;
+  await loadProgress();
+  updateStats(); applyBackground(); renderWelcome();
+  show("startScreen");
+}
+function addUser(){
+  const name=(prompt("Enter the new player's name:")||"").trim();
+  if(!name) return;
+  if(!KNOWN_USERS.includes(name)) KNOWN_USERS.push(name);
+  selectUser(name);
+}
+$("addUserBtn").onclick=addUser;
+$("switchUserBtn").onclick=async()=>{ await renderLogin(); show("loginScreen"); };
+
+/* ---------- INIT: show the player picker first ---------- */
+(async function init(){
+  await renderLogin();
+  show("loginScreen");
+})();
+</script>
+</body>
+</html>

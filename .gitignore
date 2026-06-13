@@ -1,0 +1,9 @@
+# Secret — never commit your API key
+kimi-key.txt
+
+# Runtime player save data
+progress.json
+
+# Python
+__pycache__/
+*.pyc
