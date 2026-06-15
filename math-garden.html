@@ -153,6 +153,7 @@
   .sprite{position:absolute;font-size:34px;user-select:none;cursor:pointer;will-change:left,top,transform;line-height:1;z-index:3;}
   .gplant{position:absolute;bottom:4px;transform-origin:bottom center;animation:sway 3s ease-in-out infinite;z-index:2;}
   @keyframes sway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
+  .silho{position:absolute;z-index:0;pointer-events:none;line-height:1;transform:translateX(-50%);filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));}
   .sun{position:absolute;top:14px;right:18px;font-size:44px;z-index:1;animation:spin 40s linear infinite;}
   @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
   .growthbar{height:16px;background:#e6efe1;border-radius:9px;overflow:hidden;margin:10px 0 2px;}
@@ -645,6 +646,12 @@ const SHOP = {
     {id:"bg_beach",  name:"Beach",     emoji:"🏖️", price:90},
     {id:"bg_snow",   name:"Snowy",     emoji:"❄️", price:90},
     {id:"bg_space",  name:"Space",     emoji:"🚀", price:120},
+    {id:"bg_desert", name:"Desert",    emoji:"🏜️", price:70},
+    {id:"bg_city",   name:"City",      emoji:"🏙️", price:90},
+    {id:"bg_jungle", name:"Jungle",    emoji:"🌴", price:90},
+    {id:"bg_mushroom",name:"Mushroom", emoji:"🍄", price:100},
+    {id:"bg_candy",  name:"Candy Land",emoji:"🍭", price:110},
+    {id:"bg_autumn", name:"Autumn",    emoji:"🍁", price:80},
   ]},
   power: { label:"⚡ Power-ups", items:[
     {id:"pu_hint",  name:"Hint (removes 2 wrong)", emoji:"💡", price:15, consumable:true},
@@ -659,6 +666,21 @@ const THEME_BG = {
   bg_beach: "linear-gradient(180deg,#8fe0ff 0%,#bdf0ff 50%,#ffe9a8 60%,#f5d98a 75%,#e6c266 100%)",
   bg_snow:  "linear-gradient(180deg,#cfeaff 0%,#eaf6ff 55%,#ffffff 60%,#e8eef2 75%,#cdd6dc 100%)",
   bg_space: "linear-gradient(180deg,#0b0b2a 0%,#1a1a4a 50%,#2a1a4a 60%,#3a2a4a 75%,#241a33 100%)",
+  bg_desert:"linear-gradient(180deg,#bfe3f0 0%,#dfe7c0 50%,#e8d49a 62%,#e3c879 70%,#cdab5e 100%)",
+  bg_city:  "linear-gradient(180deg,#243a6b 0%,#7a5a9a 38%,#e8975a 60%,#5e5e6e 70%,#3a3a46 100%)",
+  bg_jungle:"linear-gradient(180deg,#aee0a3 0%,#5fae5a 45%,#2f7a3a 62%,#256b2f 70%,#1a4a22 100%)",
+  bg_mushroom:"linear-gradient(180deg,#dcc4f2 0%,#b89ae0 45%,#9a78c2 62%,#7a589a 70%,#56386f 100%)",
+  bg_candy: "linear-gradient(180deg,#ffe3f1 0%,#ffc4e2 45%,#ffb0d8 62%,#f5a0c8 70%,#e58cb8 100%)",
+  bg_autumn:"linear-gradient(180deg,#ffd9a0 0%,#f5a85a 45%,#e07a3a 62%,#a85e2e 70%,#6e3c1c 100%)",
+};
+/* Decorative silhouettes drawn along the horizon for some themes (in the big garden) */
+const SILHOUETTES = {
+  bg_city:    { emojis:["🏢","🏬","🏙️","🏤","🏨","🏦","🏢","🏬"], filter:"brightness(.22) saturate(.4)", min:46, max:84, opacity:.92 },
+  bg_jungle:  { emojis:["🌴","🌿","🌳","🍃","🌴","🌳"],            filter:"brightness(.55) saturate(1.4)", min:50, max:92, opacity:.9 },
+  bg_mushroom:{ emojis:["🍄","🍄","🍄","🍄","🍄","🍄","🍄"],        filter:"saturate(1.35) brightness(1.05)", min:28, max:64, opacity:.9 },
+  bg_candy:   { emojis:["🍭","🍬","🧁","🍡","🍭","🍬"],            filter:"saturate(1.2)", min:30, max:60, opacity:.9 },
+  bg_autumn:  { emojis:["🍁","🌳","🍂","🍁","🌳"],                 filter:"brightness(.8) saturate(1.3)", min:36, max:72, opacity:.85 },
+  bg_desert:  { emojis:["🌵","🌵","🏜️","🌵"],                     filter:"brightness(.9) saturate(1.1)", min:34, max:60, opacity:.9 },
 };
 function findItem(id){ for(const c in SHOP){ const it=SHOP[c].items.find(x=>x.id===id); if(it) return it; } return null; }
 
@@ -1135,6 +1157,9 @@ function buildGarden(){
     }
   }
 
+  // THEME SILHOUETTES (city skyline, jungle, mushrooms, etc.) along the horizon
+  addSilhouettes(scene, state.background, w, h);
+
   // PLANTS: grown plot plants (harvestable when fully grown) + purchased decorations
   const plantItems=[];
   state.plots.forEach((stage,i)=>{ if(stage>0) plantItems.push({emoji:PLANT_STAGES[stage], plot:i, ripe:(stage>=PLANT_MAX)}); });
@@ -1216,6 +1241,20 @@ function buildGarden(){
   const growth=Math.min(100, Math.round((plotProgress/25)*50 + Math.min(shopThings,20)/20*50));
   $("growthFill").style.width=growth+"%";
   $("growthLabel").textContent=`Garden growth: ${growth}%  •  🐾 ${petCount} pet${petCount===1?"":"s"}  •  🌷 ${plantCount} plant${plantCount===1?"":"s"}`;
+}
+
+function addSilhouettes(scene, theme, w, h){
+  const def=SILHOUETTES[theme]; if(!def) return;
+  const count=def.emojis.length;
+  def.emojis.forEach((em,i)=>{
+    const d=document.createElement("div"); d.className="silho"; d.textContent=em;
+    d.style.fontSize=(def.min+Math.random()*(def.max-def.min))+"px";
+    d.style.left=(2 + (i+0.5)*(96/count) + (Math.random()*6-3))+"%";
+    d.style.bottom=(h*0.27)+"px";       // sit on the horizon / ground line
+    d.style.opacity=def.opacity;
+    if(def.filter) d.style.filter=def.filter;
+    scene.appendChild(d);
+  });
 }
 
 function spawnSpark(scene,x,y){
