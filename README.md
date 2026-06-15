@@ -49,7 +49,7 @@ A fun, web-based math quiz game for Grade 5 students. Answer questions to earn c
 - **Choose a topic** — eight categories across Modules 4 & 5, or "Surprise Me!" for a mix.
 - **Answer 5 questions** — multiple choice, with an instant kid-friendly explanation after each answer. Correct answers earn coins (with streak bonuses).
 - **See your results** — a star rating, score, and confetti at the end.
-- **Grow your garden** — visit the animated garden to watch your pets wander around among your plants.
+- **Grow your garden** — visit the animated garden to watch your pets wander and fly around among your plants.
 - **Shop** — spend coins on pets, plants, backgrounds, and power-ups.
 
 ### Power-ups (used during a quiz)
@@ -59,6 +59,11 @@ A fun, web-based math quiz game for Grade 5 students. Answer questions to earn c
 | 💡 Hint | Removes two wrong answers |
 | ⏭️ Skip | Skips the current question |
 | ✨ Coin Doubler | Doubles the coins from your next correct answer |
+
+### In the garden
+
+- **Name your pets** — tap any pet to give it a name. The name floats above it as it moves, so you can tell apart multiples of the same animal. Tap again to rename.
+- **Harvest & sell** — when a plot grows into a full tree 🌳 it glows; tap it to harvest. Then sell your harvested trees at the **🏪 selling booth** (or the 🧺 Sell Harvest button) for coins. Harvested plots regrow as you keep answering — a nice loop: answer → grow → harvest → sell → shop.
 
 ---
 
@@ -77,6 +82,18 @@ A fun, web-based math quiz game for Grade 5 students. Answer questions to earn c
 - 🧮 Expressions & Order (parentheses and order of operations)
 
 The game ships with a built-in bank of ~82 questions and avoids repeating questions from one round to the next.
+
+---
+
+## The Shop
+
+Spend coins across four tabs: **🐾 Pets**, **🌷 Plants & Decor**, **🖼️ Backgrounds**, and **⚡ Power-ups**.
+
+- **Rarity tiers** — pets and plants are graded **Basic → Rare → Mythical → Legendary**, shown with a colored badge and priced accordingly. Mythical and legendary pets are larger and trail sparkles in the garden.
+- **Buy multiples** — you can own more than one of any pet or plant; each shows up in the garden (hence pet naming, to tell them apart).
+- **Limited stock + restock timer** — each item has limited stock (rarer = scarcer; a Legendary has just 1). When something sells out it greys out, and a live **"⏳ Next restock in m:ss"** countdown shows when the shop refills (every 5 minutes).
+- **Pets** (14): Rabbit, Chick, Mouse, Frog, Hamster, Cat, Dog, Squirrel (Basic); Bee, Lizard, Butterfly, Snake, Turtle (Rare); Unicorn (Legendary). Bees and butterflies fly.
+- **Backgrounds** (11): Sunny Day, Sunset, Night Sky, Beach, Snowy, Space, Desert, City, Jungle, Mushroom, Candy Land — several with horizon silhouettes (city skyline, jungle, mushrooms, etc.).
 
 ---
 
@@ -133,8 +150,10 @@ Each question has this shape:
 | `math-garden.html` | The whole game (one self-contained file) |
 | `kimi-proxy.py` | Local server: serves the game, proxies KIMI calls, saves progress |
 | `kimi-test.py` | Quick check that your KIMI API key works |
-| `kimi-key.txt` | Your KIMI API key (keep private) |
-| `progress.json` | Saved progress for all players (created automatically) |
+| `kimi-key.txt` | Your KIMI API key (keep private; git-ignored) |
+| `progress.json` | Saved progress for all players (created automatically; git-ignored) |
+| `docs/` | Screenshots used in this README |
+| `resources/` | Reference curriculum material (Eureka Module 5 .docx files) |
 | `README.md` | This file |
 
 ---
