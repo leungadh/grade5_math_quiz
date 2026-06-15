@@ -157,6 +157,11 @@
   @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
   .growthbar{height:16px;background:#e6efe1;border-radius:9px;overflow:hidden;margin:10px 0 2px;}
   .growthbar>div{height:100%;background:linear-gradient(90deg,#7ed957,#3fa34d);width:0;transition:width .6s;}
+  /* harvestable trees + selling booth */
+  .gplant.ripe{cursor:pointer;animation:sway 3s ease-in-out infinite, ripeglow 1.4s ease-in-out infinite;}
+  @keyframes ripeglow{0%,100%{filter:drop-shadow(0 0 0 rgba(255,205,60,0));}50%{filter:drop-shadow(0 0 9px rgba(255,205,60,.95));}}
+  .booth{position:absolute;bottom:4px;right:8px;font-size:42px;cursor:pointer;z-index:5;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
+  .booth .badge{position:absolute;top:-4px;right:-8px;background:var(--wrong);color:#fff;font-size:11px;font-weight:bold;border-radius:10px;padding:1px 6px;border:2px solid #fff;}
   /* ambient effects */
   .star{position:absolute;color:#fff;z-index:1;animation:twinkle 2.2s ease-in-out infinite;pointer-events:none;}
   @keyframes twinkle{0%,100%{opacity:.2;}50%{opacity:.95;}}
@@ -263,8 +268,9 @@
     <div id="gardenEmpty" class="center" style="display:none;color:#6b7d6b;margin-top:12px;font-size:15px;">
       Your garden is empty! Earn coins by answering questions, then visit the 🛒 Shop to buy plants and animals.
     </div>
-    <p class="footnote">Tip: tap an animal to make it hop! 🐾</p>
+    <p class="footnote">Tip: tap a fully-grown 🌳 to harvest it, then sell at the 🏪 booth! Tap an animal to make it hop. 🐾</p>
     <div class="row">
+      <button class="btn" id="sellBtn">🧺 Sell Harvest</button>
       <button class="btn" id="gardenShopBtn">🛒 Shop</button>
       <button class="btn secondary" id="gardenHomeBtn">🏠 Home</button>
     </div>
@@ -587,6 +593,9 @@ const TOPIC_ORDER = ["volume","formula","area","shapes","fracdiv","fracmult","fr
 
 /* ---------- GARDEN ---------- */
 const PLANT_STAGES = ["🟫","🌱","🌿","🌷","🌻","🌳"]; // soil -> sprout -> ... -> tree (free, grows as you answer)
+const PLANT_MAX = PLANT_STAGES.length-1;   // 5 = fully grown tree 🌳 (harvestable)
+const HARVEST_REGROW = 2;                  // after harvest, the plot regrows from 🌿
+const CROP_VALUE = 10;                      // coins earned per harvested tree
 
 /* ---------- RARITY TIERS ---------- */
 /* Higher rarity = pricier and scarcer (smaller restock stock). */
@@ -651,6 +660,7 @@ let state = {
   coins:0, streak:0, bestStreak:0,
   topicKey:"mixed", questions:[], idx:0, correct:0,
   plots:[0,0,0,0,0],          // garden growth (persists, grows as you answer)
+  harvest:0,                  // harvested trees waiting to be sold at the booth
   pets:{},                    // { pet_id: count }  — can own more than one!
   decor:{},                   // { decor_id: count }
   themes:["bg_day"],          // backgrounds owned (own once)
@@ -672,13 +682,13 @@ function expandCounts(map, cap){
 
 /* ---------- PERSISTENCE (server-side via proxy, with localStorage fallback) ---------- */
 function progressSnapshot(){
-  return { coins:state.coins, plots:state.plots, pets:state.pets, decor:state.decor,
+  return { coins:state.coins, plots:state.plots, harvest:state.harvest, pets:state.pets, decor:state.decor,
            themes:state.themes, stock:state.stock, lastRestock:state.lastRestock,
            powerups:state.powerups, background:state.background, bestStreak:state.bestStreak };
 }
 function lsKey(){ return "mathGarden:"+STUDENT; }
 function resetProgress(){   // wipe in-memory progress back to a fresh garden
-  state.coins=0; state.plots=[0,0,0,0,0];
+  state.coins=0; state.plots=[0,0,0,0,0]; state.harvest=0;
   state.pets={}; state.decor={}; state.themes=["bg_day"]; state.stock={}; state.lastRestock=0;
   state.powerups={pu_hint:0,pu_skip:0,pu_double:0}; state.background="bg_day";
   state.bestStreak=0; state.streak=0; state.doubleActive=false;
@@ -698,6 +708,7 @@ async function loadProgress(){
   if(data && Object.keys(data).length){
     state.coins=data.coins||0;
     state.plots=Array.isArray(data.plots)?data.plots:[0,0,0,0,0];
+    state.harvest=data.harvest||0;
     state.powerups=Object.assign({pu_hint:0,pu_skip:0,pu_double:0}, data.powerups||{});
     state.background=data.background||"bg_day";
     state.bestStreak=data.bestStreak||0;
@@ -1043,6 +1054,35 @@ function openGarden(){
   startGardenAnim();
 }
 
+/* ---------- HARVEST & SELL ---------- */
+function harvestPlot(i){
+  if(i<0 || (state.plots[i]||0) < PLANT_MAX) return;   // only fully-grown trees
+  state.plots[i]=HARVEST_REGROW;                        // harvested -> regrows from a sprout
+  state.harvest=(state.harvest||0)+1;
+  beep(880,0.08); setTimeout(()=>beep(1100,0.1),70);
+  popReward("🌳 +1");
+  toast("Harvested a tree! Sell it at the 🏪 booth.");
+  saveProgress();
+  buildGarden(); startGardenAnim();
+}
+function sellHarvest(){
+  const n=state.harvest||0;
+  if(n<=0){ toast("Nothing to sell yet — grow trees 🌳 and tap them to harvest!"); return; }
+  const earned=n*CROP_VALUE;
+  state.coins+=earned; state.harvest=0;
+  soundReward(); popReward("🪙 +"+earned);
+  toast(`Sold ${n} tree${n===1?"":"s"} for ${earned} coins! 🪙`);
+  updateStats(); saveProgress();
+  if(!$("gardenScreen").classList.contains("hidden")){ buildGarden(); startGardenAnim(); }
+}
+function updateSellButton(){
+  const b=$("sellBtn"); if(!b) return;
+  const n=state.harvest||0;
+  b.textContent = n>0 ? `🧺 Sell Harvest (${n}) → +${n*CROP_VALUE}🪙` : "🧺 Sell Harvest";
+  b.disabled = n<=0;
+  b.style.opacity = n<=0 ? .6 : 1;
+}
+
 function buildGarden(){
   $("gardenTitle").textContent = `${STUDENT}'s Garden 🌳`;
   applyBackground();
@@ -1065,22 +1105,32 @@ function buildGarden(){
     }
   }
 
-  // PLANTS: grown plant-plots (free progress) + purchased decorations (repeated by count)
-  const plants=[];
-  state.plots.forEach(stage=>{ if(stage>0) plants.push(PLANT_STAGES[stage]); });
-  expandCounts(state.decor, MAX_GARDEN_PLANTS).forEach(id=>plants.push(findItem(id).emoji));
-  const n=Math.max(plants.length,1);
+  // PLANTS: grown plot plants (harvestable when fully grown) + purchased decorations
+  const plantItems=[];
+  state.plots.forEach((stage,i)=>{ if(stage>0) plantItems.push({emoji:PLANT_STAGES[stage], plot:i, ripe:(stage>=PLANT_MAX)}); });
+  expandCounts(state.decor, MAX_GARDEN_PLANTS).forEach(id=>plantItems.push({emoji:findItem(id).emoji, plot:-1, ripe:false}));
+  const n=Math.max(plantItems.length,1);
   plantSpots=[];
-  plants.forEach((em,i)=>{
+  plantItems.forEach((pi,i)=>{
     const d=document.createElement("div");
-    d.className="gplant"; d.textContent=em;
+    d.className="gplant"+(pi.ripe?" ripe":"");
+    d.textContent=pi.emoji;
     const leftPct = 4 + (i+0.5)*(92/n);
     d.style.left=leftPct+"%";
     d.style.fontSize=(26+Math.random()*14)+"px";
     d.style.animationDelay=(i*0.25)+"s";
+    if(pi.ripe){ d.title="Tap to harvest this tree! 🌳"; d.onclick=()=>harvestPlot(pi.plot); }
     scene.appendChild(d);
     plantSpots.push({ x: leftPct/100*w, y: h*0.60 });   // a perch just above each flower
   });
+
+  // SELLING BOOTH (bottom-right): tap to sell harvested trees; badge shows how many are waiting
+  const booth=document.createElement("div"); booth.className="booth";
+  booth.title="Selling Booth — sell your harvested trees for coins!";
+  booth.innerHTML = "🏪" + ((state.harvest||0)>0 ? `<span class="badge">${state.harvest}</span>` : "");
+  booth.onclick=sellHarvest;
+  scene.appendChild(booth);
+  updateSellButton();
 
   // PETS: each owned pet (repeated by count) becomes a moving sprite
   sprites=[];
@@ -1123,7 +1173,7 @@ function buildGarden(){
 
   // Empty-state message + growth meter (uses true totals, not the capped sprites)
   const petCount=petTotal(), plantCount=decorTotal();
-  $("gardenEmpty").style.display = (petCount||plantCount||plants.length) ? "none" : "block";
+  $("gardenEmpty").style.display = (petCount||plantCount||plantItems.length) ? "none" : "block";
   const plotProgress=state.plots.reduce((a,b)=>a+b,0);          // 0..25
   const shopThings=petCount+plantCount;
   const growth=Math.min(100, Math.round((plotProgress/25)*50 + Math.min(shopThings,20)/20*50));
@@ -1371,6 +1421,7 @@ $("shopModal").onclick=(e)=>{ if(e.target.id==="shopModal") closeShop(); };
 $("visitGardenBtn").onclick=openGarden;
 $("resultGardenBtn").onclick=openGarden;
 $("gardenShopBtn").onclick=openShop;
+$("sellBtn").onclick=sellHarvest;
 $("gardenHomeBtn").onclick=()=>{ renderWelcome(); show("startScreen"); };
 $("kimiStatus").textContent = CONFIG.USE_KIMI ? "Question source: KIMI (AI) — start a quiz to confirm" : "Question source: built-in bank";
 
