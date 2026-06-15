@@ -136,6 +136,10 @@
   .item .equip.on{background:var(--accent2);box-shadow:0 3px 0 #1c5a22;}
   .price{font-size:13px;color:#c9921a;font-weight:bold;}
   .qty{font-size:12px;color:#666;}
+  .item .rarity{display:inline-block;font-size:9px;font-weight:bold;padding:2px 8px;border-radius:8px;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px;}
+  .item .stock{font-size:11px;color:#7a8a7a;margin-top:1px;}
+  .item .stock.out{color:var(--wrong);font-weight:bold;}
+  .restock{padding:8px 16px 0;font-size:13px;font-weight:bold;color:#8a6500;text-align:center;}
 
   /* Power-up toolbar during quiz */
   .powerbar{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;}
@@ -278,6 +282,7 @@
       <button class="closeX" id="shopClose">✕</button>
     </div>
     <div class="tabs" id="shopTabs"></div>
+    <div class="restock" id="restockBar" style="display:none;"></div>
     <div class="shop-body"><div class="shop-grid" id="shopGrid"></div></div>
   </div>
 </div>
@@ -583,27 +588,39 @@ const TOPIC_ORDER = ["volume","formula","area","shapes","fracdiv","fracmult","fr
 /* ---------- GARDEN ---------- */
 const PLANT_STAGES = ["🟫","🌱","🌿","🌷","🌻","🌳"]; // soil -> sprout -> ... -> tree (free, grows as you answer)
 
+/* ---------- RARITY TIERS ---------- */
+/* Higher rarity = pricier and scarcer (smaller restock stock). */
+const RARITY = {
+  basic:     { label:"Basic",     color:"#8a98a6", bg:"#eef2f5", stock:9 },
+  rare:      { label:"Rare",      color:"#2b8fd0", bg:"#e6f4fc", stock:5 },
+  mythical:  { label:"Mythical",  color:"#a14fe0", bg:"#f3e9fc", stock:3 },
+  legendary: { label:"Legendary", color:"#e6920a", bg:"#fff4d6", stock:1 },
+};
+const RARITY_ORDER = ["basic","rare","mythical","legendary"];
+const RESTOCK_MS = 5*60*1000;   // shop restocks every 5 minutes
+function maxStock(it){ return (RARITY[it.rarity] && RARITY[it.rarity].stock) || 9; }
+
 /* ---------- SHOP CATALOG ---------- */
 const SHOP = {
-  pets: { label:"🐾 Pets", items:[
-    {id:"pet_rabbit",   name:"Rabbit",   emoji:"🐰", price:30},
-    {id:"pet_chick",    name:"Chick",    emoji:"🐤", price:30},
-    {id:"pet_bee",      name:"Bee",      emoji:"🐝", price:40},
-    {id:"pet_butterfly",name:"Butterfly",emoji:"🦋", price:50},
-    {id:"pet_turtle",   name:"Turtle",   emoji:"🐢", price:60},
-    {id:"pet_cat",      name:"Cat",      emoji:"🐱", price:80},
-    {id:"pet_dog",      name:"Dog",      emoji:"🐶", price:80},
-    {id:"pet_unicorn",  name:"Unicorn",  emoji:"🦄", price:150},
+  pets: { label:"🐾 Pets", stocked:true, items:[
+    {id:"pet_rabbit",   name:"Rabbit",   emoji:"🐰", price:20,  rarity:"basic"},
+    {id:"pet_chick",    name:"Chick",    emoji:"🐤", price:20,  rarity:"basic"},
+    {id:"pet_cat",      name:"Cat",      emoji:"🐱", price:30,  rarity:"basic"},
+    {id:"pet_dog",      name:"Dog",      emoji:"🐶", price:30,  rarity:"basic"},
+    {id:"pet_bee",      name:"Bee",      emoji:"🐝", price:45,  rarity:"rare"},
+    {id:"pet_butterfly",name:"Butterfly",emoji:"🦋", price:55,  rarity:"rare"},
+    {id:"pet_turtle",   name:"Turtle",   emoji:"🐢", price:65,  rarity:"rare"},
+    {id:"pet_unicorn",  name:"Unicorn",  emoji:"🦄", price:150, rarity:"legendary"},
   ]},
-  decor: { label:"🌷 Plants & Decor", items:[
-    {id:"d_tulip",    name:"Tulips",   emoji:"🌷", price:20},
-    {id:"d_sunflower",name:"Sunflower",emoji:"🌻", price:25},
-    {id:"d_rose",     name:"Roses",    emoji:"🌹", price:30},
-    {id:"d_mushroom", name:"Mushroom", emoji:"🍄", price:25},
-    {id:"d_cactus",   name:"Cactus",   emoji:"🌵", price:30},
-    {id:"d_tree",     name:"Tree",     emoji:"🌳", price:40},
-    {id:"d_fountain", name:"Fountain", emoji:"⛲", price:70},
-    {id:"d_rainbow",  name:"Rainbow",  emoji:"🌈", price:90},
+  decor: { label:"🌷 Plants & Decor", stocked:true, items:[
+    {id:"d_tulip",    name:"Tulips",   emoji:"🌷", price:20, rarity:"basic"},
+    {id:"d_sunflower",name:"Sunflower",emoji:"🌻", price:25, rarity:"basic"},
+    {id:"d_mushroom", name:"Mushroom", emoji:"🍄", price:25, rarity:"basic"},
+    {id:"d_cactus",   name:"Cactus",   emoji:"🌵", price:30, rarity:"basic"},
+    {id:"d_rose",     name:"Roses",    emoji:"🌹", price:35, rarity:"rare"},
+    {id:"d_tree",     name:"Tree",     emoji:"🌳", price:40, rarity:"rare"},
+    {id:"d_fountain", name:"Fountain", emoji:"⛲", price:70, rarity:"mythical"},
+    {id:"d_rainbow",  name:"Rainbow",  emoji:"🌈", price:90, rarity:"legendary"},
   ]},
   themes: { label:"🖼️ Backgrounds", items:[
     {id:"bg_day",    name:"Sunny Day", emoji:"☀️", price:0},
@@ -634,20 +651,35 @@ let state = {
   coins:0, streak:0, bestStreak:0,
   topicKey:"mixed", questions:[], idx:0, correct:0,
   plots:[0,0,0,0,0],          // garden growth (persists, grows as you answer)
-  owned:["bg_day"],           // ids of pets/decor/themes owned
+  pets:{},                    // { pet_id: count }  — can own more than one!
+  decor:{},                   // { decor_id: count }
+  themes:["bg_day"],          // backgrounds owned (own once)
+  stock:{},                   // { item_id: current shop stock }
+  lastRestock:0,              // timestamp (ms) of the last shop restock
   powerups:{pu_hint:0, pu_skip:0, pu_double:0},
   background:"bg_day",
   doubleActive:false          // next correct answer earns double coins
 };
+// totals/helpers for the count-based inventory
+function petTotal(){ return Object.values(state.pets).reduce((a,b)=>a+b,0); }
+function decorTotal(){ return Object.values(state.decor).reduce((a,b)=>a+b,0); }
+// expand {id:count} into a flat list of ids (repeated), up to an optional cap
+function expandCounts(map, cap){
+  const out=[];
+  for(const id in map){ for(let i=0;i<map[id];i++){ out.push(id); if(cap && out.length>=cap) return out; } }
+  return out;
+}
 
 /* ---------- PERSISTENCE (server-side via proxy, with localStorage fallback) ---------- */
 function progressSnapshot(){
-  return { coins:state.coins, plots:state.plots, owned:state.owned,
+  return { coins:state.coins, plots:state.plots, pets:state.pets, decor:state.decor,
+           themes:state.themes, stock:state.stock, lastRestock:state.lastRestock,
            powerups:state.powerups, background:state.background, bestStreak:state.bestStreak };
 }
 function lsKey(){ return "mathGarden:"+STUDENT; }
 function resetProgress(){   // wipe in-memory progress back to a fresh garden
-  state.coins=0; state.plots=[0,0,0,0,0]; state.owned=["bg_day"];
+  state.coins=0; state.plots=[0,0,0,0,0];
+  state.pets={}; state.decor={}; state.themes=["bg_day"]; state.stock={}; state.lastRestock=0;
   state.powerups={pu_hint:0,pu_skip:0,pu_double:0}; state.background="bg_day";
   state.bestStreak=0; state.streak=0; state.doubleActive=false;
 }
@@ -666,13 +698,46 @@ async function loadProgress(){
   if(data && Object.keys(data).length){
     state.coins=data.coins||0;
     state.plots=Array.isArray(data.plots)?data.plots:[0,0,0,0,0];
-    state.owned=Array.isArray(data.owned)?data.owned:["bg_day"];
     state.powerups=Object.assign({pu_hint:0,pu_skip:0,pu_double:0}, data.powerups||{});
     state.background=data.background||"bg_day";
     state.bestStreak=data.bestStreak||0;
+    if(data.pets || data.decor || data.themes){
+      // new count-based format
+      state.pets=data.pets||{}; state.decor=data.decor||{};
+      state.themes=Array.isArray(data.themes)?data.themes:["bg_day"];
+      state.stock=data.stock||{}; state.lastRestock=data.lastRestock||0;
+    } else if(Array.isArray(data.owned)){
+      // migrate old single-owned format -> counts + themes
+      data.owned.forEach(id=>{
+        if(id.startsWith("pet_")) state.pets[id]=(state.pets[id]||0)+1;
+        else if(id.startsWith("d_")) state.decor[id]=(state.decor[id]||0)+1;
+        else if(id.startsWith("bg_")) { if(!state.themes.includes(id)) state.themes.push(id); }
+      });
+    }
   }
-  if(!state.owned.includes("bg_day")) state.owned.push("bg_day");
+  if(!state.themes.includes("bg_day")) state.themes.push("bg_day");
+  applyRestock();
 }
+
+/* ---------- SHOP STOCK & RESTOCK ---------- */
+// Refill all stocked items to their max on each restock interval that has passed.
+function applyRestock(){
+  const now=Date.now();
+  if(!state.lastRestock){ state.lastRestock=now; refillStock(); return; }
+  if(now - state.lastRestock >= RESTOCK_MS){
+    refillStock();
+    const cycles=Math.floor((now-state.lastRestock)/RESTOCK_MS);
+    state.lastRestock += cycles*RESTOCK_MS;
+  }
+}
+function refillStock(){
+  ["pets","decor"].forEach(cat=>{
+    SHOP[cat].items.forEach(it=>{ state.stock[it.id]=maxStock(it); });
+  });
+}
+function stockOf(it){ return (it.id in state.stock) ? state.stock[it.id] : maxStock(it); }
+function msToRestock(){ return Math.max(0, RESTOCK_MS - (Date.now() - (state.lastRestock||Date.now()))); }
+function fmtTime(ms){ const s=Math.ceil(ms/1000); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 
 /* ---------- SOUND (tiny Web Audio beeps, no files needed) ---------- */
 let audioCtx=null;
@@ -885,13 +950,14 @@ function renderGarden(plotsId, petsId, animate){
     s.textContent=PLANT_STAGES[stage];
     p.appendChild(s);
   });
-  // pets row = owned pets
+  // pets row = owned pets (repeated by how many you own)
   const petBox=$(petsId);
-  petBox.innerHTML = state.owned.filter(id=>id.startsWith("pet_")).map(id=>findItem(id).emoji).join("");
+  petBox.innerHTML = expandCounts(state.pets,12).map(id=>findItem(id).emoji).join("");
   // decorations placed along the ground inside this garden
   const garden=petBox.closest(".garden");
   garden.querySelectorAll(".decor").forEach(d=>d.remove());
-  state.owned.filter(id=>id.startsWith("d_")).forEach((id,i)=>{
+  const decorIds=expandCounts(state.decor,8);
+  decorIds.forEach((id,i)=>{
     const d=document.createElement("div");
     d.className="decor"; d.textContent=findItem(id).emoji;
     d.style.left=(4+i*11.5)+"%";
@@ -968,6 +1034,7 @@ function show(screen){
    ============================================================ */
 let gardenAnim=null, sprites=[], plantSpots=[];
 const FLYERS=["pet_bee","pet_butterfly"];
+const MAX_GARDEN_PETS=30, MAX_GARDEN_PLANTS=24;
 
 function openGarden(){
   if(audioCtx==null){ try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} }
@@ -998,10 +1065,10 @@ function buildGarden(){
     }
   }
 
-  // PLANTS: grown plant-plots (free progress) + purchased decorations
+  // PLANTS: grown plant-plots (free progress) + purchased decorations (repeated by count)
   const plants=[];
   state.plots.forEach(stage=>{ if(stage>0) plants.push(PLANT_STAGES[stage]); });
-  state.owned.filter(id=>id.startsWith("d_")).forEach(id=>plants.push(findItem(id).emoji));
+  expandCounts(state.decor, MAX_GARDEN_PLANTS).forEach(id=>plants.push(findItem(id).emoji));
   const n=Math.max(plants.length,1);
   plantSpots=[];
   plants.forEach((em,i)=>{
@@ -1015,19 +1082,21 @@ function buildGarden(){
     plantSpots.push({ x: leftPct/100*w, y: h*0.60 });   // a perch just above each flower
   });
 
-  // PETS: each becomes a moving sprite
+  // PETS: each owned pet (repeated by count) becomes a moving sprite
   sprites=[];
-  state.owned.filter(id=>id.startsWith("pet_")).forEach(id=>{
-    const it=findItem(id), flyer=FLYERS.includes(id);
+  expandCounts(state.pets, MAX_GARDEN_PETS).forEach(id=>{
+    const it=findItem(id); if(!it) return;
+    const flyer=FLYERS.includes(id);
+    const fancy=(it.rarity==="mythical"||it.rarity==="legendary"); // sparkle trail + bigger
     const el=document.createElement("div");
     el.className="sprite"; el.textContent=it.emoji;
-    el.style.fontSize=(id==="pet_unicorn"?46:34)+"px";
-    el.title=it.name;
+    el.style.fontSize=(it.rarity==="legendary"?46:it.rarity==="mythical"?42:34)+"px";
+    el.title=it.name+" ("+(RARITY[it.rarity]?RARITY[it.rarity].label:"")+")";
     el.onclick=()=>{ el.animate([{transform:el.style.transform+" translateY(0)"},{transform:el.style.transform+" translateY(-24px)"},{transform:el.style.transform+" translateY(0)"}],{duration:480,easing:"ease-out"}); beep(700,0.1); };
     scene.appendChild(el);
-    const speed = id==="pet_turtle"?0.35 : id==="pet_bee"?1.9 : id==="pet_butterfly"?1.3 : 0.9;
+    const speed = id==="pet_turtle"?0.35 : id==="pet_bee"?1.9 : id==="pet_butterfly"?1.3 : flyer?1.1 : 0.9;
     sprites.push({
-      el, type: flyer?"flyer":"walker", isUnicorn:(id==="pet_unicorn"),
+      el, type: flyer?"flyer":"walker", sparkles:fancy,
       x: Math.random()*(w-50),
       y: flyer ? 20+Math.random()*(h*0.45) : h*0.70 + Math.random()*(h*0.18),
       vx:(0.5+Math.random()*0.6)*speed*(Math.random()<.5?-1:1),
@@ -1052,12 +1121,12 @@ function buildGarden(){
     }
   }
 
-  // Empty-state message + growth meter
-  const petCount=sprites.filter(s=>s.type!=="firefly").length, plantCount=plants.length;
-  $("gardenEmpty").style.display = (petCount||plantCount) ? "none" : "block";
+  // Empty-state message + growth meter (uses true totals, not the capped sprites)
+  const petCount=petTotal(), plantCount=decorTotal();
+  $("gardenEmpty").style.display = (petCount||plantCount||plants.length) ? "none" : "block";
   const plotProgress=state.plots.reduce((a,b)=>a+b,0);          // 0..25
-  const shopThings=state.owned.filter(id=>!id.startsWith("bg_")).length;
-  const growth=Math.min(100, Math.round((plotProgress/25)*50 + Math.min(shopThings,12)/12*50));
+  const shopThings=petCount+plantCount;
+  const growth=Math.min(100, Math.round((plotProgress/25)*50 + Math.min(shopThings,20)/20*50));
   $("growthFill").style.width=growth+"%";
   $("growthLabel").textContent=`Garden growth: ${growth}%  •  🐾 ${petCount} pet${petCount===1?"":"s"}  •  🌷 ${plantCount} plant${plantCount===1?"":"s"}`;
 }
@@ -1084,7 +1153,7 @@ function startGardenAnim(){
         if(s.x>w-46){ s.x=w-46; s.vx=-Math.abs(s.vx); }
         s.bob+=0.18; drawY=s.y+Math.sin(s.bob)*4;        // walking bob
         s.flip = s.vx<0 ? -1 : 1;
-        if(s.isUnicorn && (++s.tick % 9 === 0)) spawnSpark(scene, s.x, drawY);  // sparkle trail
+        if(s.sparkles && (++s.tick % 9 === 0)) spawnSpark(scene, s.x, drawY);  // sparkle trail (mythical/legendary)
       }
       else if(s.type==="firefly"){
         s.x+=s.vx; s.y+=s.vy;
@@ -1196,12 +1265,28 @@ function showLoading(on){
 }
 
 /* ---------- SHOP UI ---------- */
-let currentTab="pets";
-function openShop(){ if(audioCtx==null){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} $("shopModal").classList.remove("hidden"); renderShop(); }
-function closeShop(){ $("shopModal").classList.add("hidden"); }
+let currentTab="pets", shopTimer=null;
+function openShop(){
+  if(audioCtx==null){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  applyRestock();
+  $("shopModal").classList.remove("hidden");
+  renderShop(); startShopTimer();
+}
+function closeShop(){ $("shopModal").classList.add("hidden"); stopShopTimer(); }
+function startShopTimer(){
+  stopShopTimer();
+  shopTimer=setInterval(()=>{
+    const left=msToRestock();
+    const bar=$("restockBar");
+    if(bar && bar.style.display!=="none") bar.textContent=`⏳ Next restock in ${fmtTime(left)} — sold-out items refill`;
+    if(left<=0){ applyRestock(); saveProgress(); renderShop(); }
+  }, 1000);
+}
+function stopShopTimer(){ if(shopTimer){ clearInterval(shopTimer); shopTimer=null; } }
 
 function renderShop(){
   $("shopBalance").textContent=state.coins;
+  applyRestock();
   const tabs=$("shopTabs"); tabs.innerHTML="";
   Object.keys(SHOP).forEach(cat=>{
     const b=document.createElement("button");
@@ -1210,24 +1295,42 @@ function renderShop(){
     b.onclick=()=>{ currentTab=cat; renderShop(); };
     tabs.appendChild(b);
   });
+  const stocked=(currentTab==="pets"||currentTab==="decor");
+  const isPower=currentTab==="power";
+  const bar=$("restockBar");
+  if(stocked){ bar.style.display="block"; bar.textContent=`⏳ Next restock in ${fmtTime(msToRestock())} — sold-out items refill`; }
+  else { bar.style.display="none"; }
+
   const grid=$("shopGrid"); grid.innerHTML="";
-  const isPower=currentTab==="power", isTheme=currentTab==="themes";
   SHOP[currentTab].items.forEach(it=>{
-    const owned=state.owned.includes(it.id);
-    const card=document.createElement("div");
-    card.className="item"+((owned&&!isPower)?" owned":"");
-    let html=`<span class="ic">${it.emoji}</span><div class="nm">${it.name}</div>`;
-    if(isPower){
-      html+=`<div class="qty">You have: ${state.powerups[it.id]||0}</div><div class="price">🪙 ${it.price}</div>`+
-            `<button class="buy" ${state.coins<it.price?"disabled":""}>Buy</button>`;
-    } else if(owned){
-      html+=`<div class="owned-tag">✓ Owned</div>`;
-      if(isTheme){ const on=state.background===it.id;
-        html+=`<button class="equip ${on?"on":""}">${on?"✓ Using":"Use"}</button>`; }
-    } else {
-      const free=it.price===0;
-      html+=`<div class="price">${free?"Free":"🪙 "+it.price}</div>`+
-            `<button class="buy" ${state.coins<it.price?"disabled":""}>${free?"Get":"Buy"}</button>`;
+    const card=document.createElement("div"); card.className="item";
+    let html="";
+    if(stocked){
+      const r=RARITY[it.rarity]; const count=state[currentTab][it.id]||0;
+      const stock=stockOf(it); const soldOut=stock<=0;
+      card.style.borderColor=r.color;
+      html+=`<div class="rarity" style="color:${r.color};background:${r.bg}">${r.label}</div>`;
+      html+=`<span class="ic">${it.emoji}</span><div class="nm">${it.name}</div>`;
+      html+=`<div class="qty">You have: ${count}</div>`;
+      html+=`<div class="stock ${soldOut?"out":""}">${soldOut?"Sold out":stock+" in stock"}</div>`;
+      html+=`<div class="price">🪙 ${it.price}</div>`;
+      html+=`<button class="buy" ${(soldOut||state.coins<it.price)?"disabled":""}>${soldOut?"Sold out":"Buy"}</button>`;
+    } else if(isPower){
+      html+=`<span class="ic">${it.emoji}</span><div class="nm">${it.name}</div>`;
+      html+=`<div class="qty">You have: ${state.powerups[it.id]||0}</div><div class="price">🪙 ${it.price}</div>`;
+      html+=`<button class="buy" ${state.coins<it.price?"disabled":""}>Buy</button>`;
+    } else { // themes (own once)
+      const owned=state.themes.includes(it.id);
+      html+=`<span class="ic">${it.emoji}</span><div class="nm">${it.name}</div>`;
+      if(owned){
+        card.className="item owned";
+        const on=state.background===it.id;
+        html+=`<div class="owned-tag">✓ Owned</div><button class="equip ${on?"on":""}">${on?"✓ Using":"Use"}</button>`;
+      } else {
+        const free=it.price===0;
+        html+=`<div class="price">${free?"Free":"🪙 "+it.price}</div>`+
+              `<button class="buy" ${state.coins<it.price?"disabled":""}>${free?"Get":"Buy"}</button>`;
+      }
     }
     card.innerHTML=html;
     const buyBtn=card.querySelector(".buy"); if(buyBtn) buyBtn.onclick=()=>buyItem(it, currentTab);
@@ -1237,14 +1340,15 @@ function renderShop(){
 }
 
 function buyItem(it, cat){
+  const stocked=(cat==="pets"||cat==="decor");
+  if(stocked && stockOf(it)<=0){ toast(`${it.name} is sold out — restock coming soon!`); return; }
   if(state.coins<it.price){ toast("Not enough coins — keep playing! 🪙"); return; }
   state.coins-=it.price;
   if(cat==="power"){ state.powerups[it.id]=(state.powerups[it.id]||0)+1; }
-  else if(!state.owned.includes(it.id)){
-    state.owned.push(it.id);
-    if(cat==="themes"){ state.background=it.id; applyBackground(); } // auto-use a newly bought background
-  }
-  soundReward(); toast(`${it.emoji} ${it.name} ${cat==="power"?"added":"unlocked"}!`);
+  else if(cat==="themes"){ if(!state.themes.includes(it.id)) state.themes.push(it.id); state.background=it.id; applyBackground(); }
+  else { state[cat][it.id]=(state[cat][it.id]||0)+1; state.stock[it.id]=stockOf(it)-1; }   // pets / decor count + stock down
+  soundReward();
+  toast(`${it.emoji} ${it.name} ${cat==="power"?"added":cat==="themes"?"unlocked":"added to your garden"}!`);
   updateStats(); renderShop(); renderGarden("plots","pets"); saveProgress();
   // if the big animated garden is open, refresh it so the new pet/plant appears right away
   if(!$("gardenScreen").classList.contains("hidden")){ buildGarden(); startGardenAnim(); }
@@ -1273,8 +1377,8 @@ $("kimiStatus").textContent = CONFIG.USE_KIMI ? "Question source: KIMI (AI) — 
 /* ---------- PERSONALIZED WELCOME / PROGRESS RECALL ---------- */
 function renderWelcome(){
   $("welcomeTitle").textContent = `Welcome to Math Garden, ${STUDENT}! 🌱`;
-  const pets = state.owned.filter(id=>id.startsWith("pet_")).length;
-  const decor = state.owned.filter(id=>id.startsWith("d_")).length;
+  const pets = petTotal();
+  const decor = decorTotal();
   const hasProgress = state.coins>0 || pets>0 || decor>0 || state.bestStreak>0 || state.plots.some(p=>p>0);
   const box=$("welcomeBack");
   if(hasProgress){
