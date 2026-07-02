@@ -148,6 +148,44 @@
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2e7d34;color:#fff;padding:10px 18px;border-radius:14px;font-weight:bold;z-index:90;box-shadow:0 4px 14px rgba(0,0,0,.25);animation:pop .3s;}
   .decor{position:absolute;bottom:8px;font-size:30px;}
 
+  /* Question diagram */
+  .qviz{display:flex;justify-content:center;margin:0 0 14px;}
+  .qviz svg{max-width:100%;}
+
+  /* Mascot */
+  .mascotrow{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px;min-height:50px;}
+  .mascot{font-size:42px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));}
+  .mascot.cheer{animation:mascotJump .5s;}
+  .mascot.sad{animation:mascotShake .5s;}
+  @keyframes mascotJump{0%{transform:translateY(0);}40%{transform:translateY(-14px) rotate(-8deg);}100%{transform:translateY(0);}}
+  @keyframes mascotShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  .bubble{background:#fffbe8;border:2px solid #ffd45e;border-radius:14px;padding:7px 12px;font-size:14px;color:#6a5200;position:relative;max-width:75%;}
+  .bubble:before{content:"";position:absolute;left:-12px;bottom:10px;border:6px solid transparent;border-right-color:#ffd45e;}
+
+  /* Streak heat */
+  .stat.streak.hot{animation:hotpulse .7s ease-in-out infinite;}
+  @keyframes hotpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
+  #quizScreen.onfire{box-shadow:0 8px 24px rgba(0,0,0,.12), 0 0 0 3px #ffb347, 0 0 22px rgba(255,120,30,.55);}
+  .flycoin{position:fixed;z-index:120;font-size:22px;pointer-events:none;}
+
+  /* Garden scenery */
+  .hill{position:absolute;border-radius:50%;z-index:0;pointer-events:none;opacity:.9;}
+  .tuft{position:absolute;z-index:2;pointer-events:none;transform-origin:bottom center;animation:sway 2.6s ease-in-out infinite;opacity:.8;}
+  .wfall{position:absolute;top:-34px;z-index:4;pointer-events:none;animation:wfall linear infinite;}
+  @keyframes wfall{0%{transform:translateY(0) translateX(0) rotate(0);}50%{transform:translateY(300px) translateX(14px) rotate(120deg);}100%{transform:translateY(620px) translateX(-6px) rotate(280deg);}}
+  .shoot{position:absolute;width:70px;height:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);z-index:1;pointer-events:none;opacity:0;animation:shoot 5s linear infinite;}
+  @keyframes shoot{0%,88%{opacity:0;transform:translate(0,0) rotate(24deg);}90%{opacity:1;}100%{opacity:0;transform:translate(-150px,70px) rotate(24deg);}}
+  .zz{position:absolute;z-index:6;font-size:15px;pointer-events:none;animation:zzrise 1.6s ease-in-out infinite;}
+  @keyframes zzrise{0%{opacity:0;transform:translateY(0);}30%{opacity:1;}100%{opacity:0;transform:translateY(-16px);}}
+
+  /* Badges */
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
+  .badge-card{background:#f8fbf6;border:3px solid #e2eed8;border-radius:16px;padding:12px 8px;text-align:center;}
+  .badge-card.locked{opacity:.45;filter:grayscale(.8);}
+  .badge-card .ic{font-size:38px;display:block;}
+  .badge-card .nm{font-size:13px;font-weight:bold;margin-top:4px;}
+  .badge-card .ds{font-size:11px;color:#6b7d6b;margin-top:2px;}
+
   /* Big animated garden page */
   .biggarden{position:relative;height:560px;border-radius:18px;overflow:hidden;border:3px solid #cdb38f;margin-top:6px;}
   .sprite{position:absolute;font-size:34px;user-select:none;cursor:pointer;will-change:left,top,transform;line-height:1;z-index:3;}
@@ -218,6 +256,7 @@
     <div class="topic-grid" id="topicGrid"></div>
     <button class="btn" id="mixedBtn">🎲 Surprise Me! (All Topics)</button>
     <button class="btn secondary" id="visitGardenBtn">🌳 Visit My Garden</button>
+    <button class="btn secondary" id="badgesBtn">🏅 My Badges</button>
     <button class="btn secondary" id="switchUserBtn">👤 Switch Player</button>
     <div class="footnote">Grade 5 • Modules 4 &amp; 5: Fractions, Decimals, Volume, Area &amp; 2D Shapes</div>
   </div>
@@ -230,7 +269,9 @@
     </div>
     <div class="progress"><div id="progressBar"></div></div>
     <div class="powerbar" id="powerbar"></div>
+    <div class="mascotrow"><div class="mascot" id="mascot">🧑‍🌾</div><div class="bubble" id="mascotSay">Let's grow some math! 🌱</div></div>
     <div class="question" id="questionText"></div>
+    <div class="qviz" id="qviz" style="display:none;"></div>
     <div class="choices" id="choices"></div>
     <div class="feedback" id="feedback"></div>
     <button class="btn hidden" id="nextBtn">Next ➡️</button>
@@ -273,6 +314,7 @@
     <p class="footnote">Tip: tap a fully-grown 🌳 to harvest it, then sell at the 🏪 booth! Tap an animal to make it hop. 🐾</p>
     <div class="row">
       <button class="btn" id="sellBtn">🧺 Sell Harvest</button>
+      <button class="btn" id="feedBtn">🍎 Feed Pets</button>
       <button class="btn" id="gardenShopBtn">🛒 Shop</button>
       <button class="btn secondary" id="gardenHomeBtn">🏠 Home</button>
     </div>
@@ -292,6 +334,18 @@
     <div class="tabs" id="shopTabs"></div>
     <div class="restock" id="restockBar" style="display:none;"></div>
     <div class="shop-body"><div class="shop-grid" id="shopGrid"></div></div>
+  </div>
+</div>
+
+<!-- ============ BADGES MODAL ============ -->
+<div id="badgeModal" class="modal hidden">
+  <div class="shop">
+    <div class="shop-head">
+      <h2>🏅 My Badges</h2>
+      <span class="bal" id="badgeCount"></span>
+      <button class="closeX" id="badgeClose">✕</button>
+    </div>
+    <div class="shop-body"><div class="badge-grid" id="badgeGrid"></div></div>
   </div>
 </div>
 
@@ -593,6 +647,131 @@ const BANK = {
 
 const TOPIC_ORDER = ["volume","formula","area","shapes","fracdiv","fracmult","fracdivide","fracexpr"];
 
+/* ============================================================
+   QUESTION DIAGRAMS — auto-detects dimensions in the question
+   text (built-in OR AI-generated) and draws a picture in SVG.
+   ============================================================ */
+function svgWrap(inner, w, h){
+  const dw=Math.min(w,320), dh=Math.round(h*dw/w);
+  return `<svg viewBox="0 0 ${w} ${h}" width="${dw}" height="${dh}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+/* An l × w × h prism drawn as unit cubes (oblique projection). */
+function prismSVG(l, w, h){
+  if(!(l>0&&w>0&&h>0) || l>12||w>12||h>12) return "";
+  const u=26, d=11;
+  const W=l*u+w*d+20, H=h*u+w*d+30;
+  const ox=8, oy=10+w*d;
+  let s="";
+  s+=`<path d="M${ox} ${oy} h${l*u} v${h*u} h${-l*u} z" fill="#cfe8ff" stroke="#4a7ab5"/>`;
+  s+=`<path d="M${ox} ${oy} l${w*d} ${-w*d} h${l*u} l${-w*d} ${w*d} z" fill="#eaf4ff" stroke="#4a7ab5"/>`;
+  s+=`<path d="M${ox+l*u} ${oy} l${w*d} ${-w*d} v${h*u} l${-w*d} ${w*d} z" fill="#a8cdf0" stroke="#4a7ab5"/>`;
+  for(let i=1;i<l;i++){ s+=`<line x1="${ox+i*u}" y1="${oy}" x2="${ox+i*u}" y2="${oy+h*u}" stroke="#4a7ab5" stroke-width=".7"/>`;
+                        s+=`<line x1="${ox+i*u}" y1="${oy}" x2="${ox+i*u+w*d}" y2="${oy-w*d}" stroke="#4a7ab5" stroke-width=".7"/>`; }
+  for(let i=1;i<h;i++){ s+=`<line x1="${ox}" y1="${oy+i*u}" x2="${ox+l*u}" y2="${oy+i*u}" stroke="#4a7ab5" stroke-width=".7"/>`;
+                        s+=`<line x1="${ox+l*u}" y1="${oy+i*u}" x2="${ox+l*u+w*d}" y2="${oy+i*u-w*d}" stroke="#4a7ab5" stroke-width=".7"/>`; }
+  for(let i=1;i<w;i++){ s+=`<line x1="${ox+i*d}" y1="${oy-i*d}" x2="${ox+l*u+i*d}" y2="${oy-i*d}" stroke="#4a7ab5" stroke-width=".7"/>`;
+                        s+=`<line x1="${ox+l*u+i*d}" y1="${oy-i*d}" x2="${ox+l*u+i*d}" y2="${oy+h*u-i*d}" stroke="#4a7ab5" stroke-width=".7"/>`; }
+  s+=`<text x="${ox+l*u/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="#3a5a8a">${l} × ${w} × ${h}</text>`;
+  return svgWrap(s, W, H);
+}
+/* A prism shown as stacked layers, each labeled with its cube count. */
+function layersSVG(perLayer, layers){
+  if(!(perLayer>0&&layers>0) || layers>10) return "";
+  const lw=150, lh=22, d=12;
+  const W=lw+d+80, H=layers*lh+d+8;
+  let s="";
+  for(let i=0;i<layers;i++){
+    const y=d+i*lh;
+    if(i===0) s+=`<path d="M8 ${y} l${d} ${-d} h${lw} l${-d} ${d} z" fill="#eaf4ff" stroke="#4a7ab5"/>`;
+    s+=`<rect x="8" y="${y}" width="${lw}" height="${lh}" fill="${i%2?"#cfe8ff":"#bcdcf7"}" stroke="#4a7ab5"/>`;
+    s+=`<path d="M${8+lw} ${y} l${d} ${-d} v${lh} l${-d} ${d} z" fill="#a8cdf0" stroke="#4a7ab5"/>`;
+    s+=`<text x="${8+lw/2}" y="${y+15}" font-size="11" text-anchor="middle" fill="#2b4a6b">${perLayer} cubes</text>`;
+  }
+  s+=`<text x="${8+lw+d+6}" y="${d+layers*lh/2+4}" font-size="12" fill="#3a5a8a">× ${layers} layers</text>`;
+  return svgWrap(s,W,H);
+}
+/* A prism with a labeled base area and height. */
+function baseAreaSVG(area, height){
+  const hN=(height==="?"?3:Math.min(+height,8));
+  if(!(area>0&&hN>0)) return "";
+  const lw=130, d=30, fh=hN*16+20;
+  const W=lw+d+40, H=fh+d+6;
+  let s="";
+  s+=`<path d="M10 ${d+2} l${d} ${-d} h${lw} l${-d} ${d} z" fill="#eaf4ff" stroke="#4a7ab5"/>`;
+  s+=`<rect x="10" y="${d+2}" width="${lw}" height="${fh}" fill="#cfe8ff" stroke="#4a7ab5"/>`;
+  s+=`<path d="M${10+lw} ${d+2} l${d} ${-d} v${fh} l${-d} ${d} z" fill="#a8cdf0" stroke="#4a7ab5"/>`;
+  s+=`<text x="${10+lw/2+d/2}" y="${d/2+5}" font-size="11" text-anchor="middle" fill="#2b4a6b">base = ${area} cm²</text>`;
+  s+=`<text x="${10+lw+d+14}" y="${d+2+fh/2}" font-size="12" fill="#2b4a6b" text-anchor="middle" transform="rotate(90 ${10+lw+d+14} ${d+2+fh/2})">${height==="?"?"height = ?":"height "+height+" cm"}</text>`;
+  return svgWrap(s,W,H);
+}
+/* Area model for a rectangle with (possibly fractional) sides. a = height, b = width. */
+function fracRectSVG(aN,aD,bN,bD,aTxt,bTxt){
+  const aVal=aN/aD, bVal=bN/bD;
+  if(!(aVal>0&&bVal>0) || aVal>8 || bVal>8 || aD>12 || bD>12) return "";
+  const LX=34, scale=Math.min(200/Math.max(bVal,1), 120/Math.max(aVal,1), 150);
+  const W=bVal*scale, H=aVal*scale;
+  const uW=(bVal<1?scale:W), uH=(aVal<1?scale:H);
+  let s="";
+  s+=`<rect x="${LX}" y="8" width="${uW}" height="${uH}" fill="#f4f9f4" stroke="#b8cdb8" stroke-dasharray="4 3"/>`;
+  s+=`<rect x="${LX}" y="${8+uH-H}" width="${W}" height="${H}" fill="#9fd48a" stroke="#3f7a34"/>`;
+  const gw=Math.max(W,uW);
+  for(let i=1;i<bD*Math.max(1,Math.ceil(bVal));i++){ const x=LX+i*(scale/bD); if(x<LX+gw-1) s+=`<line x1="${x}" y1="8" x2="${x}" y2="${8+uH}" stroke="#3f7a34" stroke-width=".7" opacity=".55"/>`; }
+  for(let i=1;i<aD*Math.max(1,Math.ceil(aVal));i++){ const y=8+uH-i*(scale/aD); if(y>9) s+=`<line x1="${LX}" y1="${y}" x2="${LX+gw}" y2="${y}" stroke="#3f7a34" stroke-width=".7" opacity=".55"/>`; }
+  s+=`<text x="${LX+W/2}" y="${8+uH+16}" font-size="13" text-anchor="middle" fill="#2b4a2b">${bTxt}</text>`;
+  s+=`<text x="16" y="${8+uH-H/2}" font-size="13" text-anchor="middle" fill="#2b4a2b" transform="rotate(-90 16 ${8+uH-H/2})">${aTxt}</text>`;
+  return svgWrap(s, LX+gw+14, 8+uH+24);
+}
+/* Parse a question's text and pick the right diagram (or "" for none). */
+function questionViz(qText){
+  try{
+    const t=String(qText).replace(/\s+/g," ");
+    const NF="(?![½¼¾⅓⅔⅕⅘⅛\\d])";                 // don't misread "2½" as "2"
+    let m;
+    // cube with equal edges
+    m=t.match(/cube has edges[^\d]*?(\d+)/i);
+    if(m) return prismSVG(+m[1],+m[1],+m[1]);
+    // l × w × h  ("... long ... wide ... tall/high/deep")
+    m=t.match(/(\d+)\s*(?:cm|m|units?|cubes?)?\s*long[^\d]*?(\d+)\s*(?:cm|m|units?|cubes?)?\s*wide[^\d]*?(\d+)\s*(?:cm|m|units?|cubes?)?\s*(?:tall|high|deep)/i);
+    if(m) return prismSVG(+m[1],+m[2],+m[3]);
+    // "A by B by C"
+    m=t.match(/(\d+)\s*(?:cm|m|units?|cubes?)?\s*by\s*(\d+)\s*(?:cm|m|units?|cubes?)?\s*by\s*(\d+)/i);
+    if(m) return prismSVG(+m[1],+m[2],+m[3]);
+    // layer dimensions + layer count
+    const lay=t.match(/(\d+)\s*layers?/i);
+    m=t.match(/layer is (\d+)\s*cubes? long and (\d+)\s*cubes? wide/i);
+    if(m&&lay) return prismSVG(+m[1],+m[2],+lay[1]);
+    m=t.match(/(\d+)\s*layers? of (\d+)\s*cubes?/i);
+    if(m) return layersSVG(+m[2],+m[1]);
+    m=t.match(/layer[^.]*? has (\d+)\s*(?:unit )?cubes?/i);
+    if(m&&lay) return layersSVG(+m[1],+lay[1]);
+    // tower of stacked cubes
+    m=t.match(/(\d+)\s*unit cubes? are stacked/i);
+    if(m) return prismSVG(1,1,+m[1]);
+    // base area × height
+    m=t.match(/base area of (\d+)\s*cm²?[^\d]*?height of (\d+)/i);
+    if(m) return baseAreaSVG(+m[1],+m[2]);
+    m=t.match(/volume of (\d+)\s*cm³?[^\d]*?base area of (\d+)/i);
+    if(m) return baseAreaSVG(+m[2],"?");
+    // face-counting on a generic prism
+    if(/rectangular prism/i.test(t) && /faces/i.test(t)) return prismSVG(3,2,2);
+    // ---- area models (rectangles with fractional sides) ----
+    const pf=s=>{ const p=s.split("/"); return p.length===2?{n:+p[0],d:+p[1]}:{n:+s,d:1}; };
+    m=t.match(new RegExp("square with sides of (\\d+)\\/(\\d+)","i"));
+    if(m) return fracRectSVG(+m[1],+m[2],+m[1],+m[2], m[1]+"/"+m[2], m[1]+"/"+m[2]);
+    m=t.match(new RegExp("(\\d+\\/\\d+|\\d+)"+NF+"\\s*(cm|m|units?)?\\s*(?:wide|tall|long)[^\\d½¼¾⅓⅔]*?(\\d+\\/\\d+|\\d+)"+NF+"\\s*(cm|m|units?)?\\s*(?:wide|tall|long)","i"));
+    if(m && (m[1].includes("/")||m[3].includes("/"))){
+      const A=pf(m[1]), B=pf(m[3]);
+      return fracRectSVG(A.n,A.d,B.n,B.d, m[1]+(m[2]?" "+m[2]:""), m[3]+(m[4]?" "+m[4]:""));
+    }
+    m=t.match(new RegExp("(\\d+\\/\\d+|\\d+)"+NF+"\\s*(cm|m|units?)?\\s*by\\s*(\\d+\\/\\d+|\\d+)"+NF+"\\s*(cm|m|units?)","i"));
+    if(m && (m[1].includes("/")||m[3].includes("/"))){
+      const A=pf(m[1]), B=pf(m[3]);
+      return fracRectSVG(A.n,A.d,B.n,B.d, m[1]+(m[2]?" "+m[2]:""), m[3]+(m[4]?" "+m[4]:""));
+    }
+  }catch(e){}
+  return "";
+}
+
 /* ---------- GARDEN ---------- */
 const PLANT_STAGES = ["🟫","🌱","🌿","🌷","🌻","🌳"]; // soil -> sprout -> ... -> tree (free, grows as you answer)
 const PLANT_MAX = PLANT_STAGES.length-1;   // 5 = fully grown tree 🌳 (harvestable)
@@ -695,8 +874,11 @@ let state = {
   lastRestock:0,              // timestamp (ms) of the last shop restock
   powerups:{pu_hint:0, pu_skip:0, pu_double:0},
   background:"bg_day",
-  doubleActive:false          // next correct answer earns double coins
+  doubleActive:false,         // next correct answer earns double coins
+  badges:[],                  // earned badge ids
+  stats:{answered:0, correctTotal:0, quizzes:0, perfects:0, harvested:0, fed:0}
 };
+function freshStats(){ return {answered:0, correctTotal:0, quizzes:0, perfects:0, harvested:0, fed:0}; }
 // totals/helpers for the count-based inventory
 function petTotal(){ return Object.values(state.pets).reduce((a,b)=>a+b,0); }
 function decorTotal(){ return Object.values(state.decor).reduce((a,b)=>a+b,0); }
@@ -711,7 +893,8 @@ function expandCounts(map, cap){
 function progressSnapshot(){
   return { coins:state.coins, plots:state.plots, harvest:state.harvest, pets:state.pets, petNames:state.petNames, decor:state.decor,
            themes:state.themes, stock:state.stock, lastRestock:state.lastRestock,
-           powerups:state.powerups, background:state.background, bestStreak:state.bestStreak };
+           powerups:state.powerups, background:state.background, bestStreak:state.bestStreak,
+           badges:state.badges, stats:state.stats };
 }
 function lsKey(){ return "mathGarden:"+STUDENT; }
 function resetProgress(){   // wipe in-memory progress back to a fresh garden
@@ -719,6 +902,7 @@ function resetProgress(){   // wipe in-memory progress back to a fresh garden
   state.pets={}; state.petNames={}; state.decor={}; state.themes=["bg_day"]; state.stock={}; state.lastRestock=0;
   state.powerups={pu_hint:0,pu_skip:0,pu_double:0}; state.background="bg_day";
   state.bestStreak=0; state.streak=0; state.doubleActive=false;
+  state.badges=[]; state.stats=freshStats();
 }
 async function saveProgress(){
   const snap=progressSnapshot();
@@ -739,6 +923,8 @@ async function loadProgress(){
     state.powerups=Object.assign({pu_hint:0,pu_skip:0,pu_double:0}, data.powerups||{});
     state.background=data.background||"bg_day";
     state.bestStreak=data.bestStreak||0;
+    state.badges=Array.isArray(data.badges)?data.badges:[];
+    state.stats=Object.assign(freshStats(), data.stats||{});
     if(data.pets || data.decor || data.themes){
       // new count-based format
       state.pets=data.pets||{}; state.petNames=data.petNames||{}; state.decor=data.decor||{};
@@ -874,6 +1060,10 @@ function renderQuestion(){
   $("qCounter").textContent=`Question ${state.idx+1} of ${state.questions.length}`;
   $("progressBar").style.width = (state.idx/state.questions.length*100)+"%";
   $("questionText").textContent=q.q;
+  const viz=questionViz(q.q);
+  $("qviz").innerHTML=viz;
+  $("qviz").style.display = viz ? "flex" : "none";
+  mascotSay(pick(MASCOT_START));
   $("feedback").className="feedback";
   $("nextBtn").classList.add("hidden");
   renderPowerbar();
@@ -900,8 +1090,11 @@ function answer(btn, isCorrect, q){
     let doubled=false;
     if(state.doubleActive){ earned*=2; state.doubleActive=false; doubled=true; }
     state.coins+=earned;
+    state.stats.correctTotal++;
     soundCorrect();
     popReward("🪙 +"+earned);
+    flyCoins(btn, Math.min(3+Math.floor(earned/6), 6));
+    mascotSay(state.streak>=3 ? pick(MASCOT_HOT) : pick(MASCOT_CHEER), "cheer");
     growGarden();
     fb.className="feedback good show";
     fb.innerHTML=`<b>🎉 Correct! +${earned} coins${doubled?" (✨ doubled!)":""}</b>${q.explain}`;
@@ -911,10 +1104,13 @@ function answer(btn, isCorrect, q){
     // reveal the correct one
     [...$("choices").children].forEach(b=>{ if(b.textContent===q.choices[q.answer]) b.classList.add("correct"); });
     soundWrong();
+    mascotSay(pick(MASCOT_OOPS), "sad");
     fb.className="feedback bad show";
     fb.innerHTML=`<b>🌱 Not quite — keep growing!</b>The answer is <b style="display:inline">${q.choices[q.answer]}</b>. ${q.explain}`;
   }
+  state.stats.answered++;
   updateStats();
+  checkBadges();
   renderPowerbar();
   saveProgress();
   $("nextBtn").textContent = (state.idx+1>=state.questions.length) ? "See My Garden 🌻" : "Next ➡️";
@@ -1031,12 +1227,47 @@ function popReward(txt){
 function updateStats(){
   $("coinCount").textContent=state.coins;
   $("streakCount").textContent=state.streak;
+  document.querySelector(".stat.streak").classList.toggle("hot", state.streak>=3);
+  $("quizScreen").classList.toggle("onfire", state.streak>=3);
+}
+
+/* ---------- MASCOT ---------- */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const MASCOT_START=["Let's grow some math! 🌱","Pick the best answer — you've got this!","Time to make the garden proud!","Read carefully… then bloom! 🌷"];
+const MASCOT_CHEER=["Way to grow! 🌟","You're blooming brilliant!","Green thumbs up! 👍","That answer was ripe! 🍎","Sprout-standing work!"];
+const MASCOT_OOPS=["No worries — every seed needs time! 🌱","So close! Check the tip below.","Shake it off — the next one's yours!","Even sunflowers face the rain. ☔"];
+const MASCOT_HOT=["🔥 You're ON FIRE!","🔥 Unstoppable! What a streak!","🔥 The garden can't keep up with you!"];
+function mascotSay(msg, mood){
+  const m=$("mascot"), b=$("mascotSay");
+  if(!m||!b) return;
+  b.textContent=msg;
+  m.classList.remove("cheer","sad"); void m.offsetWidth;
+  if(mood) m.classList.add(mood);
+}
+
+/* ---------- FLYING COINS ---------- */
+function flyCoins(fromEl, n){
+  try{
+    const from=fromEl.getBoundingClientRect(), to=$("coinCount").getBoundingClientRect();
+    for(let i=0;i<n;i++){
+      const c=document.createElement("div"); c.className="flycoin"; c.textContent="🪙";
+      const sx=from.left+from.width/2+(Math.random()*60-30), sy=from.top+from.height/2;
+      c.style.left=sx+"px"; c.style.top=sy+"px";
+      document.body.appendChild(c);
+      const anim=c.animate([
+        {transform:"translate(0,0) scale(1)",opacity:1},
+        {transform:`translate(${to.left-sx}px,${to.top-sy}px) scale(.5)`,opacity:.9}
+      ],{duration:600+i*90,delay:i*70,easing:"cubic-bezier(.3,-.2,.7,1)",fill:"forwards"});
+      anim.onfinish=()=>c.remove();
+    }
+  }catch(e){}
 }
 
 /* ---------- END ROUND ---------- */
 function endRound(){
   $("progressBar").style.width="100%";
   const total=state.questions.length, got=state.correct;
+  state.stats.quizzes++; if(got===total) state.stats.perfects++;
   const pct=Math.round(got/total*100);
   let title,emoji,msg;
   let confetti;
@@ -1054,6 +1285,7 @@ function endRound(){
   $("resultText").textContent=msg + (state.bestStreak>=3?`  🔥 Best streak: ${state.bestStreak}!`:"");
   renderGarden("plotsResult","petsResult");
   applyBackground();
+  checkBadges();
   saveProgress();
   soundReward();
   show("resultScreen");
@@ -1070,7 +1302,7 @@ function show(screen){
 /* ============================================================
    ANIMATED GARDEN PAGE — pets wander/fly, plants fill the scene
    ============================================================ */
-let gardenAnim=null, sprites=[], plantSpots=[];
+let gardenAnim=null, sprites=[], plantSpots=[], gardenDark=false;
 const FLYERS=["pet_bee","pet_butterfly"];
 const MAX_GARDEN_PETS=30, MAX_GARDEN_PLANTS=24;
 
@@ -1086,6 +1318,7 @@ function harvestPlot(i){
   if(i<0 || (state.plots[i]||0) < PLANT_MAX) return;   // only fully-grown trees
   state.plots[i]=HARVEST_REGROW;                        // harvested -> regrows from a sprout
   state.harvest=(state.harvest||0)+1;
+  state.stats.harvested++; checkBadges();
   beep(880,0.08); setTimeout(()=>beep(1100,0.1),70);
   popReward("🌳 +1");
   toast("Harvested a tree! Sell it at the 🏪 booth.");
@@ -1130,6 +1363,34 @@ function updateSellButton(){
   b.textContent = n>0 ? `🧺 Sell Harvest (${n}) → +${n*CROP_VALUE}🪙` : "🧺 Sell Harvest";
   b.disabled = n<=0;
   b.style.opacity = n<=0 ? .6 : 1;
+  updateFeedButton();
+}
+function updateFeedButton(){
+  const b=$("feedBtn"); if(!b) return;
+  const ok=(state.harvest||0)>0 && petTotal()>0;
+  b.textContent = "🍎 Feed Pets"+((state.harvest||0)>0?` (uses 1 🌳)`:"");
+  b.style.opacity = ok?1:.6;
+}
+/* Feed the pets one harvested tree: hearts, happy hops, and a badge to earn. */
+function feedPets(){
+  if(petTotal()<=0){ toast("No pets to feed yet — visit the 🛒 Shop!"); return; }
+  if((state.harvest||0)<=0){ toast("You need a harvested tree 🌳 — tap a glowing tree first!"); return; }
+  state.harvest--; state.stats.fed++;
+  const scene=$("bigGarden");
+  sprites.forEach(s=>{
+    if(s.type==="firefly") return;
+    s.nap=0; if(s.zzEl){ s.zzEl.remove(); s.zzEl=null; }
+    s.el.animate([{transform:`scaleX(${s.flip}) translateY(0)`},{transform:`scaleX(${s.flip}) translateY(-18px)`},{transform:`scaleX(${s.flip}) translateY(0)`}],
+                 {duration:420, delay:Math.random()*350, easing:"ease-out"});
+    const hb=document.createElement("div"); hb.className="zz"; hb.textContent=Math.random()<.5?"💕":"❤️";
+    hb.style.left=(s.x+8)+"px"; hb.style.top=(s.y-10)+"px";
+    scene.appendChild(hb); setTimeout(()=>hb.remove(),1600);
+  });
+  beep(700,0.08); setTimeout(()=>beep(900,0.1),90);
+  toast("🍎 Yum! Your pets loved the snack! 💕");
+  const booth=document.querySelector("#bigGarden .booth");
+  if(booth) booth.innerHTML="🏪"+((state.harvest||0)>0?`<span class="badge">${state.harvest}</span>`:"");
+  updateSellButton(); checkBadges(); saveProgress();
 }
 
 function buildGarden(){
@@ -1137,6 +1398,7 @@ function buildGarden(){
   applyBackground();
   const scene=$("bigGarden");
   const dark = (state.background==="bg_night" || state.background==="bg_space");
+  gardenDark = dark;
   scene.innerHTML = `<div class="sun">${dark?"🌙":"☀️"}</div>`;
   const w=scene.clientWidth||600, h=scene.clientHeight||400;
 
@@ -1153,6 +1415,9 @@ function buildGarden(){
       scene.appendChild(st);
     }
   }
+
+  // SCENERY: rolling hills, grass tufts, weather (snow/leaves/candy, shooting stars)
+  addScenery(scene, state.background, w, h);
 
   // THEME SILHOUETTES (city skyline, jungle, mushrooms, etc.) along the horizon
   addSilhouettes(scene, state.background, w, h);
@@ -1205,7 +1470,8 @@ function buildGarden(){
         y: flyer ? 20+Math.random()*(h*0.45) : h*0.70 + Math.random()*(h*0.18),
         vx:(0.5+Math.random()*0.6)*(id==="pet_turtle"?0.35:id==="pet_bee"?1.9:id==="pet_butterfly"?1.3:flyer?1.1:0.9)*(Math.random()<.5?-1:1),
         vy: flyer ? (0.3+Math.random()*0.6)*(Math.random()<.5?-1:1) : 0,
-        bob: Math.random()*6.28, flip:1, target:null, landed:0, tick:Math.floor(Math.random()*10)
+        bob: Math.random()*6.28, flip:1, target:null, landed:0, tick:Math.floor(Math.random()*10),
+        nap:0, zzEl:null, chase:null, chaseT:0
       };
       el.onclick=()=>namePet(sp);
       scene.appendChild(el);
@@ -1254,6 +1520,66 @@ function addSilhouettes(scene, theme, w, h){
   });
 }
 
+/* ---------- SCENERY: hills, grass tufts & weather per theme ---------- */
+const HILLS={
+  bg_day:["#b5d99a","#a3cf88"], bg_sunset:["#d9a86b","#c99257"], bg_snow:["#f2f7fa","#e2ecf2"],
+  bg_jungle:["#3f8a48","#2f7a3a"], bg_candy:["#f7b8d8","#f0a5cc"], bg_beach:["#f0dc9a","#e8d088"],
+  bg_desert:["#ddc07a","#d2b269"], bg_mushroom:["#8a68aa","#7a589a"], bg_night:["#2f4a34","#27402c"],
+};
+const WEATHER={
+  bg_snow:  {glyphs:["❄️","❄","✻"],  n:14, dur:[6,12], size:[10,20]},
+  bg_jungle:{glyphs:["🍃","🍂"],      n:8,  dur:[7,13], size:[13,20]},
+  bg_candy: {glyphs:["🍬","🍭","✨"], n:8,  dur:[8,14], size:[13,19]},
+  bg_sunset:{glyphs:["🍂"],           n:5,  dur:[9,14], size:[12,17]},
+};
+function addScenery(scene, theme, w, h){
+  // rolling hills on the horizon
+  const hc=HILLS[theme];
+  if(hc){
+    [[-w*0.12, 0.52, hc[1], w*0.65],[w*0.42, 0.56, hc[0], w*0.72]].forEach(([x,top,col,hw])=>{
+      const d=document.createElement("div"); d.className="hill";
+      d.style.cssText=`left:${x}px;top:${h*top}px;width:${hw}px;height:${h*0.45}px;background:${col};`;
+      scene.insertBefore(d, scene.firstChild);
+    });
+  }
+  // falling weather particles
+  const wd=WEATHER[theme];
+  if(wd){
+    for(let i=0;i<wd.n;i++){
+      const p=document.createElement("div"); p.className="wfall";
+      p.textContent=wd.glyphs[i%wd.glyphs.length];
+      p.style.left=(Math.random()*96)+"%";
+      p.style.fontSize=(wd.size[0]+Math.random()*(wd.size[1]-wd.size[0]))+"px";
+      const dur=wd.dur[0]+Math.random()*(wd.dur[1]-wd.dur[0]);
+      p.style.animationDuration=dur+"s";
+      p.style.animationDelay=(-Math.random()*dur)+"s";
+      scene.appendChild(p);
+    }
+  }
+  // shooting stars for dark skies
+  if(theme==="bg_space"||theme==="bg_night"){
+    for(let i=0;i<2;i++){
+      const st=document.createElement("div"); st.className="shoot";
+      st.style.left=(20+Math.random()*70)+"%"; st.style.top=(5+Math.random()*30)+"%";
+      st.style.animationDelay=(Math.random()*6)+"s";
+      st.style.animationDuration=(4+Math.random()*4)+"s";
+      scene.appendChild(st);
+    }
+  }
+  // swaying grass tufts on the ground (skip barren themes)
+  if(!["bg_space","bg_snow","bg_desert","bg_city"].includes(theme)){
+    for(let i=0;i<7;i++){
+      const g=document.createElement("div"); g.className="tuft";
+      g.textContent=Math.random()<.5?"🌿":"🌾";
+      g.style.left=(2+Math.random()*94)+"%";
+      g.style.bottom=(2+Math.random()*Math.max(10,h*0.16))+"px";
+      g.style.fontSize=(12+Math.random()*10)+"px";
+      g.style.animationDelay=(Math.random()*2.5)+"s";
+      scene.appendChild(g);
+    }
+  }
+}
+
 function spawnSpark(scene,x,y){
   const sp=document.createElement("div"); sp.className="spark";
   sp.textContent = Math.random()<.5 ? "✨" : "⭐";
@@ -1271,12 +1597,34 @@ function startGardenAnim(){
     sprites.forEach(s=>{
       let drawY;
       if(s.type==="walker"){
-        s.x+=s.vx;
-        if(s.x<4){ s.x=4; s.vx=Math.abs(s.vx); }
-        if(s.x>w-46){ s.x=w-46; s.vx=-Math.abs(s.vx); }
-        s.bob+=0.18; drawY=s.y+Math.sin(s.bob)*4;        // walking bob
-        s.flip = s.vx<0 ? -1 : 1;
-        if(s.sparkles && (++s.tick % 9 === 0)) spawnSpark(scene, s.x, drawY);  // sparkle trail (mythical/legendary)
+        if(s.nap>0){
+          // snoozing: hold still and show 💤 (cats nap often; everyone naps more at night)
+          s.nap--; drawY=s.y;
+          if(!s.zzEl){ s.zzEl=document.createElement("div"); s.zzEl.className="zz"; s.zzEl.textContent="💤"; scene.appendChild(s.zzEl); }
+          s.zzEl.style.left=(s.x+26)+"px"; s.zzEl.style.top=(drawY-14)+"px";
+          if(s.nap===0){ s.zzEl.remove(); s.zzEl=null; }
+        } else {
+          const napChance=(s.petId==="pet_cat"?0.0022:0.0007)*(gardenDark?3:1);
+          if(Math.random()<napChance) s.nap=240+Math.floor(Math.random()*300);   // ~4–9s snooze
+          // dogs love chasing butterflies
+          if(s.petId==="pet_dog" && !s.chase && Math.random()<0.002){
+            const b=sprites.find(x=>x.petId==="pet_butterfly");
+            if(b){ s.chase=b; s.chaseT=260; }
+          }
+          if(s.chase){
+            s.vx=(s.chase.x>s.x?1:-1)*1.8;
+            if(--s.chaseT<=0 || Math.abs(s.chase.x-s.x)<30){
+              if(Math.abs(s.chase.x-s.x)<44){ s.chase.vy=-1.4; s.chase.target=null; s.chase.landed=0; }  // butterfly startles!
+              s.chase=null; s.vx=(Math.random()<.5?-1:1)*0.8;
+            }
+          }
+          s.x+=s.vx;
+          if(s.x<4){ s.x=4; s.vx=Math.abs(s.vx); }
+          if(s.x>w-46){ s.x=w-46; s.vx=-Math.abs(s.vx); }
+          s.bob+=0.18; drawY=s.y+Math.sin(s.bob)*4;        // walking bob
+          s.flip = s.vx<0 ? -1 : 1;
+          if(s.sparkles && (++s.tick % 9 === 0)) spawnSpark(scene, s.x, drawY);  // sparkle trail (mythical/legendary)
+        }
       }
       else if(s.type==="firefly"){
         s.x+=s.vx; s.y+=s.vy;
@@ -1473,7 +1821,7 @@ function buyItem(it, cat){
   else { state[cat][it.id]=(state[cat][it.id]||0)+1; state.stock[it.id]=stockOf(it)-1; }   // pets / decor count + stock down
   soundReward();
   toast(`${it.emoji} ${it.name} ${cat==="power"?"added":cat==="themes"?"unlocked":"added to your garden"}!`);
-  updateStats(); renderShop(); renderGarden("plots","pets"); saveProgress();
+  updateStats(); renderShop(); renderGarden("plots","pets"); checkBadges(); saveProgress();
   // if the big animated garden is open, refresh it so the new pet/plant appears right away
   if(!$("gardenScreen").classList.contains("hidden")){ buildGarden(); startGardenAnim(); }
 }
@@ -1481,6 +1829,43 @@ function buyItem(it, cat){
 function toast(msg){
   const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(),1700);
+}
+
+/* ---------- BADGES ---------- */
+const BADGES=[
+  {id:"b_first",   name:"First Sprout",   emoji:"🌱", desc:"Answer your first question correctly", test:()=>state.stats.correctTotal>=1},
+  {id:"b_fifty",   name:"Growing Strong", emoji:"🌿", desc:"Get 50 answers correct",                test:()=>state.stats.correctTotal>=50},
+  {id:"b_perfect", name:"Perfect Garden", emoji:"🌟", desc:"Get 100% on a quiz",                    test:()=>state.stats.perfects>=1},
+  {id:"b_master",  name:"Math Master",    emoji:"🏆", desc:"Get 5 perfect quizzes",                 test:()=>state.stats.perfects>=5},
+  {id:"b_streak",  name:"On Fire",        emoji:"🔥", desc:"Reach a 5-answer streak",               test:()=>state.bestStreak>=5},
+  {id:"b_rich",    name:"Coin Collector", emoji:"🪙", desc:"Hold 100 coins at once",                test:()=>state.coins>=100},
+  {id:"b_pets3",   name:"Pet Pal",        emoji:"🐾", desc:"Own 3 pets",                            test:()=>petTotal()>=3},
+  {id:"b_pets8",   name:"Zoo Keeper",     emoji:"🦄", desc:"Own 8 pets",                            test:()=>petTotal()>=8},
+  {id:"b_harvest", name:"Green Thumb",    emoji:"🧺", desc:"Harvest 5 trees",                       test:()=>state.stats.harvested>=5},
+  {id:"b_feeder",  name:"Snack Time",     emoji:"🍎", desc:"Feed your pets 3 times",                test:()=>state.stats.fed>=3},
+  {id:"b_themes",  name:"World Traveler", emoji:"🖼️", desc:"Own 3 backgrounds",                     test:()=>state.themes.length>=3},
+  {id:"b_quiz10",  name:"Dedicated",      emoji:"📚", desc:"Finish 10 quizzes",                     test:()=>state.stats.quizzes>=10},
+];
+function checkBadges(){
+  const newly=[];
+  BADGES.forEach(b=>{ try{ if(!state.badges.includes(b.id) && b.test()){ state.badges.push(b.id); newly.push(b); } }catch(e){} });
+  if(newly.length){
+    newly.forEach((b,i)=>setTimeout(()=>{ toast(`🏅 Badge unlocked: ${b.emoji} ${b.name}!`); soundReward(); }, i*1000));
+    launchConfetti(30);
+    saveProgress();
+  }
+}
+function openBadges(){
+  $("badgeModal").classList.remove("hidden");
+  $("badgeCount").textContent=`${state.badges.length} / ${BADGES.length}`;
+  const g=$("badgeGrid"); g.innerHTML="";
+  BADGES.forEach(b=>{
+    const got=state.badges.includes(b.id);
+    const d=document.createElement("div");
+    d.className="badge-card"+(got?"":" locked");
+    d.innerHTML=`<span class="ic">${got?b.emoji:"🔒"}</span><div class="nm">${b.name}</div><div class="ds">${b.desc}</div>`;
+    g.appendChild(d);
+  });
 }
 
 /* ---------- WIRE UP BUTTONS ---------- */
@@ -1496,6 +1881,10 @@ $("visitGardenBtn").onclick=openGarden;
 $("resultGardenBtn").onclick=openGarden;
 $("gardenShopBtn").onclick=openShop;
 $("sellBtn").onclick=sellHarvest;
+$("feedBtn").onclick=feedPets;
+$("badgesBtn").onclick=openBadges;
+$("badgeClose").onclick=()=>$("badgeModal").classList.add("hidden");
+$("badgeModal").onclick=(e)=>{ if(e.target.id==="badgeModal") $("badgeModal").classList.add("hidden"); };
 $("gardenHomeBtn").onclick=()=>{ renderWelcome(); show("startScreen"); };
 $("kimiStatus").textContent = CONFIG.USE_KIMI ? "Question source: KIMI (AI) — start a quiz to confirm" : "Question source: built-in bank";
 

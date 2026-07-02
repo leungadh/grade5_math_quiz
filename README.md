@@ -2,6 +2,15 @@
 
 A fun, web-based math quiz game for Grade 5 students. Answer questions to earn coins, grow a living garden, collect animated pets, and shop for plants, backgrounds, and power-ups. Questions are based on **Eureka / EngageNY Grade 5 Modules 4 & 5**, and can be generated fresh each time by the **KIMI (Moonshot) AI**.
 
+## What's new
+
+- **📊 Math diagrams** — volume, base-area, and fraction-area questions now show an SVG picture (unit-cube prisms, stacked layers, shaded area models). Works for AI-generated questions too, whenever dimensions can be detected in the text.
+- **🧑‍🌾 Farmer mascot** — cheers correct answers, encourages after misses, and goes wild on streaks.
+- **🪙 Flying coins & streak fire** — coins fly to the counter on correct answers; at a 3+ streak the quiz card glows and the 🔥 counter pulses.
+- **🏅 Badges** — 12 achievements (perfect quizzes, streaks, harvests, pet collecting…) in a badge book on the home screen.
+- **🌄 Scenery & weather** — rolling hills, swaying grass, falling snow/leaves/candy, and shooting stars at night, per background theme.
+- **🐾 Smarter pets** — pets nap with 💤 (more at night, cats most of all), dogs chase butterflies, and you can **🍎 Feed Pets** with a harvested tree for hearts and happy hops.
+
 ---
 
 ## Screenshots
